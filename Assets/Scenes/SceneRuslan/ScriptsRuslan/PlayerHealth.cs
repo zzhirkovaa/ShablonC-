@@ -8,9 +8,8 @@ public class PlayerHealth : MonoBehaviour, IDamageable
     [SerializeField] private float maxHealth = 100f;
 
     private float currentHealth;
-    private bool isDead = false;  // Флаг, что игрок мертв
+    private bool isDead = false; 
 
-    // События для UI
     public event Action<float, float> OnHealthChanged;
     public event Action OnPlayerDied;
 
@@ -36,16 +35,10 @@ public class PlayerHealth : MonoBehaviour, IDamageable
             OnPlayerDied?.Invoke();
             OnHealthChanged?.Invoke(currentHealth, maxHealth);
 
-            // ВРЕМЕННО: принудительно ищем DeathScreen
             var deathScreen = FindObjectOfType<DeathScreenView>();
             if (deathScreen != null)
             {
-                Debug.Log("Нашел DeathScreen, вызываю вручную");
                 deathScreen.ShowDeathScreen();
-            }
-            else
-            {
-                Debug.LogError("DeathScreenView НЕ НАЙДЕН на сцене!");
             }
         }
         else
@@ -54,7 +47,6 @@ public class PlayerHealth : MonoBehaviour, IDamageable
         }
     }
 
-    // Методы для UI
     public float GetCurrentHealth() => currentHealth;
     public float GetMaxHealth() => maxHealth;
     public bool IsDead() => isDead;

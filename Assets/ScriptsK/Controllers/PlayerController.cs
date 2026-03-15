@@ -51,6 +51,11 @@ public class PlayerController : MonoBehaviour
         _movement.ApplyGravity();
 
         _animator.SetFloat("Blend", inputMagnitude, _animationSmoothTime, Time.deltaTime);
+
+        if (Input.GetMouseButtonDown(0)) 
+        {
+            _animator.SetTrigger("Punch");
+        }
     }
 
     private void HandleInput()
