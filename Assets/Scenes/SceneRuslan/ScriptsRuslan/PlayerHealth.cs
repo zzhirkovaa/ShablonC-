@@ -8,7 +8,7 @@ public class PlayerHealth : MonoBehaviour, IDamageable
     [SerializeField] private float maxHealth = 100f;
 
     private float currentHealth;
-    private bool isDead = false; 
+    private bool isDead = false;
 
     public event Action<float, float> OnHealthChanged;
     public event Action OnPlayerDied;
@@ -17,34 +17,34 @@ public class PlayerHealth : MonoBehaviour, IDamageable
     {
         currentHealth = maxHealth;
         isDead = false;
+        OnHealthChanged?.Invoke(currentHealth, maxHealth);
     }
 
-    public void TakeDamage(float amount)
+    public void TakeDamage(DamageInfo damage)
     {
         if (isDead) return;
 
-        currentHealth -= amount;
-        Debug.Log("Нанесен урон. ост хп " + currentHealth);
+        currentHealth -= damage.Amount;
+
+        Debug.Log($"Получен {damage.Type} урон: {damage.Amount}. Осталось ХП: {currentHealth}");
 
         if (currentHealth <= 0)
         {
             currentHealth = 0;
-            isDead = true;
-
-            Debug.Log("Смерть");
-            OnPlayerDied?.Invoke();
-            OnHealthChanged?.Invoke(currentHealth, maxHealth);
-
-            var deathScreen = FindObjectOfType<DeathScreenView>();
-            if (deathScreen != null)
-            {
-                deathScreen.ShowDeathScreen();
-            }
+            Die();
         }
-        else
-        {
-            OnHealthChanged?.Invoke(currentHealth, maxHealth);
-        }
+
+        OnHealthChanged?.Invoke(currentHealth, maxHealth);
+    }
+
+    private void Die()
+    {
+        isDead = true;
+        Debug.Log("Игрок погиб");
+        OnPlayerDied?.Invoke();
+
+        var deathScreen = FindObjectOfType<DeathScreenView>();
+        deathScreen?.ShowDeathScreen();
     }
 
     public float GetCurrentHealth() => currentHealth;

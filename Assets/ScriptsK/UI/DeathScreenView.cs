@@ -5,9 +5,7 @@ using UnityEngine.SceneManagement;
 
 namespace Player.UI
 {
-    /// <summary>
-    /// Слой представления - экран смерти
-    /// </summary>
+
     public class DeathScreenView : MonoBehaviour
     {
         [SerializeField] private GameObject _deathPanel;
@@ -19,7 +17,6 @@ namespace Player.UI
             _deathPanel.SetActive(false);
             _restartButton.onClick.AddListener(RestartGame);
 
-            // Подписываемся на смерть игрока
             var player = FindObjectOfType<PlayerHealth>();
             if (player != null)
             {
@@ -30,8 +27,6 @@ namespace Player.UI
         public void ShowDeathScreen()
         {
             _deathPanel.SetActive(true);
-
-            // Блокируем игру и разблокируем курсор
             Time.timeScale = 0f;
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;

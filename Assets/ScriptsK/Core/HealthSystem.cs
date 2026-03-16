@@ -3,17 +3,12 @@ using UnityEngine;
 
 namespace Player.Core
 {
-    /// <summary>
-    /// Чистая бизнес-логика здоровья (п. 3.1.2)
-    /// Не знает про UI, не знает про MonoBehaviour
-    /// </summary>
     public class HealthSystem
     {
         private float _currentHealth;
         private readonly float _maxHealth;
 
-        // События для связи с представлением
-        public event Action<float, float> OnHealthChanged; // current, max
+        public event Action<float, float> OnHealthChanged; 
         public event Action OnDied;
 
         public HealthSystem(float maxHealth)

@@ -3,7 +3,7 @@ using UnityEngine;
 public class Projectile : MonoBehaviour
 {
     public float speed = 10f;
-    public float damage = 10f;
+    public float damageAmount = 10f; 
     public float lifetime = 5f;
 
     void Start()
@@ -20,7 +20,9 @@ public class Projectile : MonoBehaviour
     {
         if (other.TryGetComponent<IDamageable>(out var victim))
         {
-            victim.TakeDamage(damage);
+            DamageInfo info = new DamageInfo(damageAmount, DamageType.Magical);
+            victim.TakeDamage(info);
+
             Destroy(gameObject);
         }
     }

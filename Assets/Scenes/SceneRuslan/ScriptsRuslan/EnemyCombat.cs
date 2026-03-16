@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class EnemyCombat : MonoBehaviour
 {
-    public float damage = 10f;
+    public float damageAmount = 10f;
     public float attackCooldown = 5f;
     public float attackVisualDistance = 3.5f;
 
@@ -29,13 +29,15 @@ public class EnemyCombat : MonoBehaviour
         {
             if (_player.TryGetComponent<IDamageable>(out var victim))
             {
-                victim.TakeDamage(damage);
-                Debug.Log("урон нанес!");
+                DamageInfo info = new DamageInfo(damageAmount, DamageType.Physical);
+                victim.TakeDamage(info);
+
+                Debug.Log("Враг нанес физический урон!");
             }
         }
         else
         {
-            Debug.Log("промах");
+            Debug.Log("Враг промахнулся");
         }
     }
 }
