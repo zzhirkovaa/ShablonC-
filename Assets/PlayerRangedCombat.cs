@@ -2,36 +2,40 @@ using UnityEngine;
 
 public class PlayerRangedCombat : MonoBehaviour
 {
-    [Header("Settings")]
     [SerializeField] private GameObject _projectilePrefab;
     [SerializeField] private Transform _firePoint;
     [SerializeField] private float _attackCooldown = 3f;
+    [SerializeField] private AbilityCooldownUI _cooldownUI;
 
-    private float _nextAttackTime = 0f;
+    private float _cooldownTimer = 0f;
     private Animator _animator;
 
     private void Awake() => _animator = GetComponent<Animator>();
 
     private void Update()
     {
-        // Правая кнопка мыши (1)
-        if (Input.GetMouseButtonDown(1) && Time.time >= _nextAttackTime)
+        if (_cooldownTimer > 0)
+        {
+            _cooldownTimer -= Time.deltaTime;
+        }
+
+        if (_cooldownUI != null)
+        {
+            _cooldownUI.UpdateFill(_cooldownTimer, _attackCooldown);
+        }
+
+        if (Input.GetMouseButtonDown(1) && _cooldownTimer <= 0)
         {
             _animator.SetTrigger("Shoot");
-            _nextAttackTime = Time.time + _attackCooldown;
+            _cooldownTimer = _attackCooldown;
         }
     }
 
-    // Вызывается через Animation Event
-    public void LaunchProjectile()
+    public void LaunchProjectile() // Animation Event
     {
-        if (_projectilePrefab == null || _firePoint == null) return;
-
-        GameObject projGO = Instantiate(_projectilePrefab, _firePoint.position, _firePoint.rotation);
-
-        if (projGO.TryGetComponent<Projectile>(out var proj))
+        if (_projectilePrefab && _firePoint)
         {
-            proj.owner = this.gameObject; // Передаем игрока как владельца
+            Instantiate(_projectilePrefab, _firePoint.position, _firePoint.rotation);
         }
     }
 }
