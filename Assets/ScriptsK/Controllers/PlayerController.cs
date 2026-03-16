@@ -37,22 +37,27 @@ public class PlayerController : MonoBehaviour
     private void Update()
     {
         HandleInput();
-
         float inputMagnitude = _inputVector.magnitude;
         bool isMoving = inputMagnitude > _startAnimThreshold;
 
-        _movement.HandleMovement(_inputVector, isMoving, _isRunning);
-
-        if (isMoving)
+        CameraController cam = Camera.main.GetComponent<CameraController>();
+        if (cam != null)
         {
-            _movement.RotateToDirection(_movement.GetDesiredMoveDirection());
+            if (isMoving)
+            {
+                float targetYaw = cam.GetYaw();
+                Quaternion targetRotation = Quaternion.Euler(0, targetYaw, 0);
+                transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, _rotationSpeed * Time.deltaTime);
+            }
         }
+
+        _movement.HandleMovement(_inputVector, isMoving, _isRunning);
 
         _movement.ApplyGravity();
 
         _animator.SetFloat("Blend", inputMagnitude, _animationSmoothTime, Time.deltaTime);
 
-        if (Input.GetMouseButtonDown(0)) 
+        if (Input.GetMouseButtonDown(0))
         {
             _animator.SetTrigger("Punch");
         }
