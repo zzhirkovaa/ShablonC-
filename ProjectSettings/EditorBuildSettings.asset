@@ -6,8 +6,10 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/Scenes/SceneRuslan/Menu.unity
+    guid: c2caa1d57339d9845a34f909e83dc227
+  - enabled: 1
     path: Assets/Scenes/SceneRuslan/MainLevel.unity
     guid: 6832de630c371094d9b553c49a3979cc
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
-  m_UseUCBPForAssetBundles: 0
