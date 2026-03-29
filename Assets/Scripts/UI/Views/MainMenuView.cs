@@ -5,6 +5,7 @@ using UnityEngine.UI;
 public class MainMenuView : MonoBehaviour
 {
     [SerializeField] private GameObject _mainMenuPanel;
+    [SerializeField] private GameObject _objectToHideOnSettings;
     [SerializeField] private Button _playButton;
     [SerializeField] private Button _settingsButton;
     [SerializeField] private Button _exitButton;
@@ -29,12 +30,20 @@ public class MainMenuView : MonoBehaviour
 
     public void Show()
     {
-        _mainMenuPanel.SetActive(true);
+        if (_mainMenuPanel != null)
+            _mainMenuPanel.SetActive(true);
+
+        if (_objectToHideOnSettings != null)
+            _objectToHideOnSettings.SetActive(true);
     }
 
     public void Hide()
     {
-        _mainMenuPanel.SetActive(false);
+        if (_mainMenuPanel != null)
+            _mainMenuPanel.SetActive(false);
+
+        if (_objectToHideOnSettings != null)
+            _objectToHideOnSettings.SetActive(false);
     }
 
     private void RaisePlayClicked() => PlayClicked?.Invoke();
