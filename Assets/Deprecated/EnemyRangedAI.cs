@@ -9,16 +9,21 @@ public class EnemyRangedAI : MonoBehaviour
     private Transform _playerTransform;
     private Animator _anim;
     private EnemyRangedCombat _combat;
+    private IEnemyMovementBounds _movementBounds;
 
-    void Start()
+    public void Construct(Transform playerTransform, IEnemyMovementBounds movementBounds)
+    {
+        _playerTransform = playerTransform;
+        _movementBounds = movementBounds;
+    }
+
+    private void Awake()
     {
         _anim = GetComponent<Animator>();
         _combat = GetComponent<EnemyRangedCombat>();
-        GameObject p = GameObject.FindGameObjectWithTag("player");
-        if (p != null) _playerTransform = p.transform;
     }
 
-    void Update()
+    private void Update()
     {
         if (_playerTransform == null) return;
 
@@ -42,7 +47,10 @@ public class EnemyRangedAI : MonoBehaviour
     {
         _anim.SetBool("IsRunning", false);
 
-        transform.LookAt(new Vector3(_playerTransform.position.x, transform.position.y, _playerTransform.position.z));
+        transform.LookAt(new Vector3(
+            _playerTransform.position.x,
+            transform.position.y,
+            _playerTransform.position.z));
 
         bool isAlreadyAttacking = _anim.GetCurrentAnimatorStateInfo(0).IsName("Attack");
 
@@ -59,9 +67,22 @@ public class EnemyRangedAI : MonoBehaviour
         _anim.ResetTrigger("Attack");
 
         Vector3 dir = (_playerTransform.position - transform.position).normalized;
-        dir.y = 0;
-        transform.position += dir * moveSpeed * Time.deltaTime;
-        transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(dir), Time.deltaTime * 5f);
+        dir.y = 0f;
+
+        Vector3 nextPosition = transform.position + dir * moveSpeed * Time.deltaTime;
+
+        if (_movementBounds != null)
+            nextPosition = _movementBounds.ClampPosition(nextPosition);
+
+        transform.position = nextPosition;
+
+        if (dir != Vector3.zero)
+        {
+            transform.rotation = Quaternion.Slerp(
+                transform.rotation,
+                Quaternion.LookRotation(dir),
+                Time.deltaTime * 5f);
+        }
     }
 
     private void IdleState()

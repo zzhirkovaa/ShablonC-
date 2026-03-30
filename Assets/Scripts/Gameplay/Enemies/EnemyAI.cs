@@ -12,10 +12,12 @@ public class EnemyAI : MonoBehaviour
     private Transform _playerTransform;
     private Animator _anim;
     private EnemyCombat _combat;
+    private IEnemyMovementBounds _movementBounds;
 
-    public void Construct(Transform playerTransform)
+    public void Construct(Transform playerTransform, IEnemyMovementBounds movementBounds)
     {
         _playerTransform = playerTransform;
+        _movementBounds = movementBounds;
     }
 
     private void Awake()
@@ -52,7 +54,12 @@ public class EnemyAI : MonoBehaviour
         Vector3 dir = (_playerTransform.position - transform.position).normalized;
         dir.y = 0f;
 
-        transform.position += dir * moveSpeed * Time.deltaTime;
+        Vector3 nextPosition = transform.position + dir * moveSpeed * Time.deltaTime;
+
+        if (_movementBounds != null)
+            nextPosition = _movementBounds.ClampPosition(nextPosition);
+
+        transform.position = nextPosition;
 
         if (dir != Vector3.zero)
         {

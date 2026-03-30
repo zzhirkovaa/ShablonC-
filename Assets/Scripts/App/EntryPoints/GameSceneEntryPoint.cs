@@ -80,9 +80,35 @@ public sealed class GameSceneEntryPoint : SceneEntryPointBase
 
     private void InjectPlayerIntoEnemies()
     {
-        EnemyAI[] enemiesAi = Object.FindObjectsOfType<EnemyAI>();
-        foreach (EnemyAI enemyAI in enemiesAi)
-            enemyAI.Construct(_playerController.transform);
+        EnemyAI[] meleeEnemies = Object.FindObjectsOfType<EnemyAI>();
+        foreach (EnemyAI enemyAI in meleeEnemies)
+        {
+            EnemyRoomReference roomReference = enemyAI.GetComponent<EnemyRoomReference>();
+
+            if (roomReference == null || roomReference.RoomBounds == null)
+            {
+                Debug.LogWarning($"Enemy {enemyAI.name} has no EnemyRoomReference or RoomBounds assigned.");
+                enemyAI.Construct(_playerController.transform, null);
+                continue;
+            }
+
+            enemyAI.Construct(_playerController.transform, roomReference.RoomBounds);
+        }
+
+        EnemyRangedAI[] rangedEnemies = Object.FindObjectsOfType<EnemyRangedAI>();
+        foreach (EnemyRangedAI enemyAI in rangedEnemies)
+        {
+            EnemyRoomReference roomReference = enemyAI.GetComponent<EnemyRoomReference>();
+
+            if (roomReference == null || roomReference.RoomBounds == null)
+            {
+                Debug.LogWarning($"Ranged enemy {enemyAI.name} has no EnemyRoomReference or RoomBounds assigned.");
+                enemyAI.Construct(_playerController.transform, null);
+                continue;
+            }
+
+            enemyAI.Construct(_playerController.transform, roomReference.RoomBounds);
+        }
 
         EnemyCombat[] enemiesCombat = Object.FindObjectsOfType<EnemyCombat>();
         foreach (EnemyCombat enemyCombat in enemiesCombat)
