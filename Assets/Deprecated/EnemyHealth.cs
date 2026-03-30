@@ -1,6 +1,6 @@
 using UnityEngine;
 using System;
-using UnityEngine.AI; // Добавил для чистоты кода с NavMeshAgent
+using UnityEngine.AI;
 
 public class EnemyHealth : MonoBehaviour, IDamageable, IHealth
 {
@@ -16,34 +16,30 @@ public class EnemyHealth : MonoBehaviour, IDamageable, IHealth
 
     private Animator animator;
 
-    void Start()
+    private void Start()
     {
         currentHealth = maxHealth;
         animator = GetComponent<Animator>();
 
-        // Оповещаем UI о начальном здоровье
         OnHealthChanged?.Invoke(currentHealth / maxHealth);
     }
 
-    // ВАЖНО: Изменили float на DamageInfo
     public void TakeDamage(DamageInfo damage)
     {
         if (isDead) return;
 
-        // Здесь ты можешь добавить логику: например, 
-        // скелет получает меньше урона от магии, а маг от физики.
         currentHealth -= damage.Amount;
         currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
 
         Debug.Log($"{gameObject.name} получил {damage.Type} урон. Осталось ХП: {currentHealth}");
 
-        // Обновляем полоску здоровья (Slider)
         OnHealthChanged?.Invoke(currentHealth / maxHealth);
 
-        if (currentHealth <= 0) Die();
+        if (currentHealth <= 0)
+            Die();
     }
 
-    void Die()
+    private void Die()
     {
         if (isDead) return;
         isDead = true;
@@ -55,9 +51,8 @@ public class EnemyHealth : MonoBehaviour, IDamageable, IHealth
             animator.SetTrigger("Die");
         }
 
-        // Отключаем ИИ и навигацию
-        // Попробуй заменить EnemyAI на EnemyRangedAI, если это маг
-        if (TryGetComponent<EnemyRangedAI>(out var rangedAi)) rangedAi.enabled = false;
+        if (TryGetComponent<EnemyRangedAI>(out var rangedAi))
+            rangedAi.enabled = false;
 
         if (TryGetComponent<NavMeshAgent>(out var agent))
         {
@@ -65,7 +60,8 @@ public class EnemyHealth : MonoBehaviour, IDamageable, IHealth
             agent.enabled = false;
         }
 
-        if (TryGetComponent<Collider>(out var col)) col.enabled = false;
+        if (TryGetComponent<Collider>(out var col))
+            col.enabled = false;
 
         Destroy(gameObject, 3f);
     }

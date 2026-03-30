@@ -8,6 +8,7 @@ public sealed class GameSceneEntryPoint : SceneEntryPointBase
     [Header("Player")]
     [SerializeField] private PlayerController _playerController;
     [SerializeField] private PlayerHealth _playerHealth;
+    [SerializeField] private PlayerStatsProvider _playerStatsProvider;
 
     [Header("Camera")]
     [SerializeField] private CameraController _cameraController;
@@ -36,6 +37,7 @@ public sealed class GameSceneEntryPoint : SceneEntryPointBase
             appServices.PendingLoadDataService,
             _playerController.transform,
             _playerController.CharacterController,
+            _playerStatsProvider,
             _scriptsToDisableOnPause,
             _mainMenuSceneName);
 
@@ -78,11 +80,11 @@ public sealed class GameSceneEntryPoint : SceneEntryPointBase
 
     private void InjectPlayerIntoEnemies()
     {
-        EnemyAI[] enemiesAi = FindObjectsOfType<EnemyAI>();
+        EnemyAI[] enemiesAi = Object.FindObjectsOfType<EnemyAI>();
         foreach (EnemyAI enemyAI in enemiesAi)
             enemyAI.Construct(_playerController.transform);
 
-        EnemyCombat[] enemiesCombat = FindObjectsOfType<EnemyCombat>();
+        EnemyCombat[] enemiesCombat = Object.FindObjectsOfType<EnemyCombat>();
         foreach (EnemyCombat enemyCombat in enemiesCombat)
             enemyCombat.Construct(_playerController.transform);
     }

@@ -1,8 +1,6 @@
-using UnityEditor.Overlays;
-
 public interface ISaveService
 {
-    void SaveGame(string sceneName, UnityEngine.Vector3 playerPosition);
+    void SaveGame(SaveData data);
     SaveData LoadGame();
     bool HasSave();
 }

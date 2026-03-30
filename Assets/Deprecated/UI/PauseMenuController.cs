@@ -1,4 +1,4 @@
-using UnityEngine;
+/*using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class PauseMenuController : MonoBehaviour
@@ -176,4 +176,4 @@ public class PauseMenuController : MonoBehaviour
                 script.enabled = enabledState;
         }
     }
-}
+}*/

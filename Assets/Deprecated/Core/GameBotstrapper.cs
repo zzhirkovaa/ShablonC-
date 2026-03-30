@@ -1,4 +1,4 @@
-using UnityEngine;
+/*using UnityEngine;
 
 public class GameBootstrapper : MonoBehaviour
 {
@@ -28,4 +28,4 @@ public class GameBootstrapper : MonoBehaviour
         if (pauseMenuController != null)
             pauseMenuController.Construct(_saveService);
     }
-}
+}*/

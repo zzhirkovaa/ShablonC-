@@ -59,6 +59,16 @@ public class PlayerHealth : MonoBehaviour, IDamageable, IPlayerHealthModel
         OnHealthChanged?.Invoke(currentHealth, maxHealth);
     }
 
+    public void RestoreHealth(float value)
+    {
+        currentHealth = Mathf.Clamp(value, 0f, maxHealth);
+
+        if (currentHealth > 0f)
+            isDead = false;
+
+        OnHealthChanged?.Invoke(currentHealth, maxHealth);
+    }
+
     private void Die()
     {
         if (isDead) return;

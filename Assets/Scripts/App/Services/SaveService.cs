@@ -10,16 +10,8 @@ public class SaveService : ISaveService
         _savePath = Path.Combine(Application.persistentDataPath, "save.json");
     }
 
-    public void SaveGame(string sceneName, Vector3 playerPosition)
+    public void SaveGame(SaveData data)
     {
-        SaveData data = new SaveData
-        {
-            SceneName = sceneName,
-            PosX = playerPosition.x,
-            PosY = playerPosition.y,
-            PosZ = playerPosition.z
-        };
-
         string json = JsonUtility.ToJson(data, true);
         File.WriteAllText(_savePath, json);
 

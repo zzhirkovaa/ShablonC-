@@ -10,13 +10,22 @@ public class PlayerRangedCombat : MonoBehaviour
     private float _cooldownTimer = 0f;
     private Animator _animator;
 
-    private void Awake() => _animator = GetComponent<Animator>();
+    public float CurrentCooldown => _cooldownTimer;
+    public float MaxCooldown => _attackCooldown;
+
+    private void Awake()
+    {
+        _animator = GetComponent<Animator>();
+    }
 
     private void Update()
     {
-        if (_cooldownTimer > 0)
+        if (_cooldownTimer > 0f)
         {
             _cooldownTimer -= Time.deltaTime;
+
+            if (_cooldownTimer < 0f)
+                _cooldownTimer = 0f;
         }
 
         if (_cooldownUI != null)
@@ -24,16 +33,26 @@ public class PlayerRangedCombat : MonoBehaviour
             _cooldownUI.UpdateFill(_cooldownTimer, _attackCooldown);
         }
 
-        if (Input.GetMouseButtonDown(1) && _cooldownTimer <= 0)
+        if (Input.GetMouseButtonDown(1) && _cooldownTimer <= 0f)
         {
             _animator.SetTrigger("Shoot");
             _cooldownTimer = _attackCooldown;
         }
     }
 
-    public void LaunchProjectile() // Animation Event
+    public void RestoreCooldown(float value)
     {
-        if (_projectilePrefab && _firePoint)
+        _cooldownTimer = Mathf.Clamp(value, 0f, _attackCooldown);
+
+        if (_cooldownUI != null)
+        {
+            _cooldownUI.UpdateFill(_cooldownTimer, _attackCooldown);
+        }
+    }
+
+    public void LaunchProjectile()
+    {
+        if (_projectilePrefab != null && _firePoint != null)
         {
             Instantiate(_projectilePrefab, _firePoint.position, _firePoint.rotation);
         }
