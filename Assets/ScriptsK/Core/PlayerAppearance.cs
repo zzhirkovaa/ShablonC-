@@ -4,9 +4,6 @@ using Player.Helpers;
 
 namespace Player.Core
 {
-    /// <summary>
-    /// Ћогика управлени€ внешностью персонажа
-    /// </summary>
     public class PlayerAppearance : IPlayerAppearance
     {
         private readonly Animator _animator;
@@ -40,8 +37,6 @@ namespace Player.Core
         public void UpdateAnimations(float speed)
         {
             _animator.SetFloat(BLEND_PARAM, speed, _animationSmoothTime, Time.deltaTime);
-
-            // ћожно добавить обновление InputX/InputZ если нужно
         }
 
         private Vector2 GetEyeOffsetForState(string state)

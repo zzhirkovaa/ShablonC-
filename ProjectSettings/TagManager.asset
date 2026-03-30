@@ -4,7 +4,10 @@
 TagManager:
   serializedVersion: 3
   tags:
+  - player
+  - enemy_fist
   - PlayerEyes
+  - Enemy
   layers:
   - Default
   - TransparentFX
@@ -12,7 +15,7 @@ TagManager:
   - 
   - Water
   - UI
-  - Ground
+  - Enemy
   - 
   - 
   - 
