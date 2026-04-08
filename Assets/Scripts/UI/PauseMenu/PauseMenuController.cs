@@ -1,14 +1,11 @@
-using System;
+﻿using System;
 using UnityEngine;
 
 namespace Ui.PauseMenu
 {
     public sealed class PauseMenuController : IDisposable
     {
-        private readonly PauseMenuModel _model;
         private readonly PauseMenuView _view;
-        private readonly IPauseMenuInput _pauseMenuInput;
-        private readonly IPauseStateService _pauseStateService;
         private readonly SaveGameInteractor _saveGameInteractor;
         private readonly LoadGameInteractor _loadGameInteractor;
         private readonly ISceneLoader _sceneLoader;
@@ -17,13 +14,14 @@ namespace Ui.PauseMenu
         private readonly IPlayerSaveStateWriter _playerSaveStateWriter;
         private readonly IEnemySaveStateReader _enemySaveStateReader;
         private readonly IEnemySaveStateWriter _enemySaveStateWriter;
+        private readonly MonoBehaviour[] _scriptsToDisableOnPause;
         private readonly string _mainMenuSceneName;
+
+        private bool _isPaused;
 
         public PauseMenuController(
             PauseMenuModel model,
             PauseMenuView view,
-            IPauseMenuInput pauseMenuInput,
-            IPauseStateService pauseStateService,
             SaveGameInteractor saveGameInteractor,
             LoadGameInteractor loadGameInteractor,
             ISceneLoader sceneLoader,
@@ -32,12 +30,10 @@ namespace Ui.PauseMenu
             IPlayerSaveStateWriter playerSaveStateWriter,
             IEnemySaveStateReader enemySaveStateReader,
             IEnemySaveStateWriter enemySaveStateWriter,
+            MonoBehaviour[] scriptsToDisableOnPause,
             string mainMenuSceneName)
         {
-            _model = model;
             _view = view;
-            _pauseMenuInput = pauseMenuInput;
-            _pauseStateService = pauseStateService;
             _saveGameInteractor = saveGameInteractor;
             _loadGameInteractor = loadGameInteractor;
             _sceneLoader = sceneLoader;
@@ -46,9 +42,10 @@ namespace Ui.PauseMenu
             _playerSaveStateWriter = playerSaveStateWriter;
             _enemySaveStateReader = enemySaveStateReader;
             _enemySaveStateWriter = enemySaveStateWriter;
+            _scriptsToDisableOnPause = scriptsToDisableOnPause;
             _mainMenuSceneName = mainMenuSceneName;
 
-            _pauseMenuInput.ToggleRequested += OnToggleRequested;
+            _view.ToggleRequested += OnToggleRequested;
             _view.ResumeClicked += OnResumeClicked;
             _view.SaveClicked += OnSaveClicked;
             _view.LoadClicked += OnLoadClicked;
@@ -59,7 +56,7 @@ namespace Ui.PauseMenu
 
         public void Dispose()
         {
-            _pauseMenuInput.ToggleRequested -= OnToggleRequested;
+            _view.ToggleRequested -= OnToggleRequested;
             _view.ResumeClicked -= OnResumeClicked;
             _view.SaveClicked -= OnSaveClicked;
             _view.LoadClicked -= OnLoadClicked;
@@ -76,13 +73,10 @@ namespace Ui.PauseMenu
 
         private void OnToggleRequested()
         {
-            if (_model.IsPaused)
-            {
+            if (_isPaused)
                 ResumeGame();
-                return;
-            }
-
-            PauseGame();
+            else
+                PauseGame();
         }
 
         private void OnResumeClicked()
@@ -104,13 +98,16 @@ namespace Ui.PauseMenu
             if (progress == null)
                 return;
 
-            _pauseStateService.ExitPause();
-            _model.IsPaused = false;
+            Time.timeScale = 1f;
+            _isPaused = false;
 
             if (progress.SceneName == _sceneLoader.CurrentSceneName)
             {
                 ApplyLoadedData(progress);
                 _view.Hide();
+                SetGameplayScriptsEnabled(true);
+                Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
                 return;
             }
 
@@ -120,7 +117,7 @@ namespace Ui.PauseMenu
 
         private void OnMainMenuClicked()
         {
-            _pauseStateService.ExitPause();
+            Time.timeScale = 1f;
             _sceneLoader.Load(_mainMenuSceneName);
         }
 
@@ -132,16 +129,38 @@ namespace Ui.PauseMenu
 
         private void PauseGame()
         {
-            _model.IsPaused = true;
             _view.Show();
-            _pauseStateService.EnterPause();
+            Time.timeScale = 0f;
+            _isPaused = true;
+
+            SetGameplayScriptsEnabled(false);
+
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
         }
 
         private void ResumeGame()
         {
-            _model.IsPaused = false;
             _view.Hide();
-            _pauseStateService.ExitPause();
+            Time.timeScale = 1f;
+            _isPaused = false;
+
+            SetGameplayScriptsEnabled(true);
+
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+        }
+
+        private void SetGameplayScriptsEnabled(bool enabledState)
+        {
+            if (_scriptsToDisableOnPause == null)
+                return;
+
+            foreach (MonoBehaviour script in _scriptsToDisableOnPause)
+            {
+                if (script != null)
+                    script.enabled = enabledState;
+            }
         }
     }
 }

@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using Player.Core;
 using Player.Interfaces;
 using Player.UI;
@@ -15,7 +15,6 @@ public sealed class GameSceneEntryPoint : SceneEntryPointBase
 
     [Header("UI")]
     [SerializeField] private PauseMenuView _pauseMenuView;
-    [SerializeField] private PauseMenuInputListener _pauseMenuInputListener;
     [SerializeField] private HealthBarView _healthBarView;
     [SerializeField] private DeathScreenView _deathScreenView;
 
@@ -30,7 +29,6 @@ public sealed class GameSceneEntryPoint : SceneEntryPointBase
     public override void Initialize(AppServices appServices)
     {
         ComposePlayer();
-        EnsurePauseInputListener();
 
         IPlayerRepository playerRepository = new JsonPlayerRepository(appServices.SaveService);
         IEnemyRepository enemyRepository = new JsonEnemyRepository(appServices.SaveService);
@@ -57,13 +55,10 @@ public sealed class GameSceneEntryPoint : SceneEntryPointBase
 
         IEnemySaveStateReader enemySaveStateReader = new EnemySaveStateReader();
         IEnemySaveStateWriter enemySaveStateWriter = new EnemySaveStateWriter();
-        IPauseStateService pauseStateService = new PauseStateService(_scriptsToDisableOnPause);
 
         _pauseMenuController = new Ui.PauseMenu.PauseMenuController(
             new PauseMenuModel(),
             _pauseMenuView,
-            _pauseMenuInputListener,
-            pauseStateService,
             saveGameInteractor,
             loadGameInteractor,
             appServices.SceneLoader,
@@ -72,6 +67,7 @@ public sealed class GameSceneEntryPoint : SceneEntryPointBase
             playerSaveStateWriter,
             enemySaveStateReader,
             enemySaveStateWriter,
+            _scriptsToDisableOnPause,
             _mainMenuSceneName);
 
         _pauseMenuController.ApplyPendingLoadIfNeeded();
@@ -86,15 +82,6 @@ public sealed class GameSceneEntryPoint : SceneEntryPointBase
             appServices.SceneLoader);
 
         InjectPlayerIntoEnemies();
-    }
-
-    private void EnsurePauseInputListener()
-    {
-        if (_pauseMenuInputListener == null && _pauseMenuView != null)
-            _pauseMenuInputListener = _pauseMenuView.GetComponent<PauseMenuInputListener>();
-
-        if (_pauseMenuInputListener == null && _pauseMenuView != null)
-            _pauseMenuInputListener = _pauseMenuView.gameObject.AddComponent<PauseMenuInputListener>();
     }
 
     private void ComposePlayer()

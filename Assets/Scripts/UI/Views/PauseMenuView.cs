@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -10,6 +10,7 @@ public class PauseMenuView : MonoBehaviour
     [SerializeField] private Button _loadButton;
     [SerializeField] private Button _mainMenuButton;
 
+    public event Action ToggleRequested;
     public event Action ResumeClicked;
     public event Action SaveClicked;
     public event Action LoadClicked;
@@ -43,6 +44,12 @@ public class PauseMenuView : MonoBehaviour
 
         if (_mainMenuButton != null)
             _mainMenuButton.onClick.RemoveListener(RaiseMainMenuClicked);
+    }
+
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Escape))
+            ToggleRequested?.Invoke();
     }
 
     public void Show()
