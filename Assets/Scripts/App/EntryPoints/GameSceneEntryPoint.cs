@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.InputSystem.UI;
 using Player.Core;
 using Player.Interfaces;
 using Player.UI;
@@ -29,6 +31,7 @@ public sealed class GameSceneEntryPoint : SceneEntryPointBase
     public override void Initialize(AppServices appServices)
     {
         ComposePlayer();
+        EnsureEventSystem();
 
         IPlayerRepository playerRepository = new JsonPlayerRepository(appServices.SaveService);
         IEnemyRepository enemyRepository = new JsonEnemyRepository(appServices.SaveService);
@@ -82,6 +85,16 @@ public sealed class GameSceneEntryPoint : SceneEntryPointBase
             appServices.SceneLoader);
 
         InjectPlayerIntoEnemies();
+    }
+
+    private void EnsureEventSystem()
+    {
+        if (Object.FindFirstObjectByType<EventSystem>() != null)
+            return;
+
+        GameObject eventSystemObject = new GameObject("EventSystem");
+        eventSystemObject.AddComponent<EventSystem>();
+        eventSystemObject.AddComponent<InputSystemUIInputModule>();
     }
 
     private void ComposePlayer()

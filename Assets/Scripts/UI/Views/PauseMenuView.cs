@@ -5,7 +5,7 @@ using UnityEngine.UI;
 public class PauseMenuView : MonoBehaviour
 {
     [SerializeField] private GameObject _pauseMenuPanel;
-    [SerializeField] private Button _resumeButton;
+    //[SerializeField] private Button _resumeButton;
     [SerializeField] private Button _saveButton;
     [SerializeField] private Button _loadButton;
     [SerializeField] private Button _mainMenuButton;
@@ -18,8 +18,8 @@ public class PauseMenuView : MonoBehaviour
 
     private void OnEnable()
     {
-        if (_resumeButton != null)
-            _resumeButton.onClick.AddListener(RaiseResumeClicked);
+        //if (_resumeButton != null)
+        //    _resumeButton.onClick.AddListener(RaiseResumeClicked);
 
         if (_saveButton != null)
             _saveButton.onClick.AddListener(RaiseSaveClicked);
@@ -33,8 +33,8 @@ public class PauseMenuView : MonoBehaviour
 
     private void OnDisable()
     {
-        if (_resumeButton != null)
-            _resumeButton.onClick.RemoveListener(RaiseResumeClicked);
+        //if (_resumeButton != null)
+        //    _resumeButton.onClick.RemoveListener(RaiseResumeClicked);
 
         if (_saveButton != null)
             _saveButton.onClick.RemoveListener(RaiseSaveClicked);
@@ -64,7 +64,7 @@ public class PauseMenuView : MonoBehaviour
             _pauseMenuPanel.SetActive(false);
     }
 
-    private void RaiseResumeClicked() => ResumeClicked?.Invoke();
+    //private void RaiseResumeClicked() => ResumeClicked?.Invoke();
     private void RaiseSaveClicked() => SaveClicked?.Invoke();
     private void RaiseLoadClicked() => LoadClicked?.Invoke();
     private void RaiseMainMenuClicked() => MainMenuClicked?.Invoke();
