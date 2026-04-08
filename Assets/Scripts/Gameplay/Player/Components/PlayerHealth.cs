@@ -1,9 +1,9 @@
-using UnityEngine;
+п»їusing UnityEngine;
 using System;
 
 public class PlayerHealth : MonoBehaviour, IDamageable, IPlayerHealthModel
 {
-    [Header("Настройки здоровья")]
+    [Header("РќР°СЃС‚СЂРѕР№РєРё Р·РґРѕСЂРѕРІСЊСЏ")]
     [SerializeField] private float maxHealth = 100f;
 
     private float currentHealth;
@@ -77,8 +77,8 @@ public class PlayerHealth : MonoBehaviour, IDamageable, IPlayerHealthModel
         if (_animator != null)
             _animator.SetTrigger("Die");
 
-        if (TryGetComponent<PlayerController>(out var controller))
-            controller.enabled = false;
+        if (TryGetComponent<PlayerController>(out var playerController))
+            playerController.enabled = false;
 
         OnPlayerDied?.Invoke();
     }

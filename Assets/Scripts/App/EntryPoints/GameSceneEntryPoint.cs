@@ -15,6 +15,7 @@ public sealed class GameSceneEntryPoint : SceneEntryPointBase
 
     [Header("UI")]
     [SerializeField] private PauseMenuView _pauseMenuView;
+    [SerializeField] private PauseMenuInputListener _pauseMenuInputListener;
     [SerializeField] private HealthBarView _healthBarView;
     [SerializeField] private DeathScreenView _deathScreenView;
 
@@ -22,26 +23,58 @@ public sealed class GameSceneEntryPoint : SceneEntryPointBase
     [SerializeField] private MonoBehaviour[] _scriptsToDisableOnPause;
     [SerializeField] private string _mainMenuSceneName = "MainMenu";
 
-    private PauseMenuUiController _pauseMenuController;
+    private Ui.PauseMenu.PauseMenuController _pauseMenuController;
     private HealthBarUiController _healthBarController;
     private DeathScreenUiController _deathScreenController;
 
     public override void Initialize(AppServices appServices)
     {
         ComposePlayer();
+        EnsurePauseInputListener();
 
-        _pauseMenuController = new PauseMenuUiController(
-            _pauseMenuView,
-            appServices.SaveService,
-            appServices.SceneLoader,
-            appServices.PendingLoadDataService,
+        IPlayerRepository playerRepository = new JsonPlayerRepository(appServices.SaveService);
+        IEnemyRepository enemyRepository = new JsonEnemyRepository(appServices.SaveService);
+        ISceneStateRepository sceneStateRepository = new JsonSceneStateRepository(appServices.SaveService);
+
+        SaveGameInteractor saveGameInteractor = new SaveGameInteractor(
+            sceneStateRepository,
+            playerRepository,
+            enemyRepository);
+
+        LoadGameInteractor loadGameInteractor = new LoadGameInteractor(
+            sceneStateRepository,
+            playerRepository,
+            enemyRepository);
+
+        IPlayerSaveStateReader playerSaveStateReader = new PlayerSaveStateReader(
+            _playerController.transform,
+            _playerStatsProvider);
+
+        IPlayerSaveStateWriter playerSaveStateWriter = new PlayerSaveStateWriter(
             _playerController.transform,
             _playerController.CharacterController,
-            _playerStatsProvider,
-            _scriptsToDisableOnPause,
+            _playerStatsProvider);
+
+        IEnemySaveStateReader enemySaveStateReader = new EnemySaveStateReader();
+        IEnemySaveStateWriter enemySaveStateWriter = new EnemySaveStateWriter();
+        IPauseStateService pauseStateService = new PauseStateService(_scriptsToDisableOnPause);
+
+        _pauseMenuController = new Ui.PauseMenu.PauseMenuController(
+            new PauseMenuModel(),
+            _pauseMenuView,
+            _pauseMenuInputListener,
+            pauseStateService,
+            saveGameInteractor,
+            loadGameInteractor,
+            appServices.SceneLoader,
+            appServices.PendingLoadDataService,
+            playerSaveStateReader,
+            playerSaveStateWriter,
+            enemySaveStateReader,
+            enemySaveStateWriter,
             _mainMenuSceneName);
 
-        _pauseMenuController.ApplyPendingSaveIfNeeded();
+        _pauseMenuController.ApplyPendingLoadIfNeeded();
 
         _healthBarController = new HealthBarUiController(
             _playerHealth,
@@ -53,6 +86,15 @@ public sealed class GameSceneEntryPoint : SceneEntryPointBase
             appServices.SceneLoader);
 
         InjectPlayerIntoEnemies();
+    }
+
+    private void EnsurePauseInputListener()
+    {
+        if (_pauseMenuInputListener == null && _pauseMenuView != null)
+            _pauseMenuInputListener = _pauseMenuView.GetComponent<PauseMenuInputListener>();
+
+        if (_pauseMenuInputListener == null && _pauseMenuView != null)
+            _pauseMenuInputListener = _pauseMenuView.gameObject.AddComponent<PauseMenuInputListener>();
     }
 
     private void ComposePlayer()

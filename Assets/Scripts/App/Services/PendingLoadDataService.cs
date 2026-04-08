@@ -1,17 +1,17 @@
 public sealed class PendingLoadDataService : IPendingLoadDataService
 {
-    private SaveData _pendingData;
+    private GameProgressModel _pendingData;
 
     public bool HasPendingData => _pendingData != null;
 
-    public void Set(SaveData data)
+    public void Set(GameProgressModel data)
     {
         _pendingData = data;
     }
 
-    public SaveData Consume()
+    public GameProgressModel Consume()
     {
-        SaveData result = _pendingData;
+        GameProgressModel result = _pendingData;
         _pendingData = null;
         return result;
     }

@@ -1,9 +1,9 @@
-using UnityEngine;
+п»їusing UnityEngine;
 using Player.Interfaces;
 using Player.Core;
 
 /// <summary>
-/// Контроллер для смены внешности (глаза)
+/// РљРѕРЅС‚СЂРѕР»Р»РµСЂ РґР»СЏ СЃРјРµРЅС‹ РІРЅРµС€РЅРѕСЃС‚Рё (РіР»Р°Р·Р°)
 /// </summary>
 public class AppearanceController : MonoBehaviour
 {
@@ -14,12 +14,9 @@ public class AppearanceController : MonoBehaviour
     [SerializeField] private KeyCode _deadStateKey = KeyCode.Alpha4;
 
     private IPlayerAppearance _appearance;
-    private PlayerController _playerController;
 
     private void Awake()
     {
-        _playerController = GetComponent<PlayerController>();
-
         _appearance = new PlayerAppearance(
             GetComponent<Animator>(),
             GetComponentsInChildren<Renderer>(),
