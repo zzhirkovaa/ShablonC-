@@ -27266,7 +27266,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PauseMenuView
   _pauseMenuPanel: {fileID: 981741663}
-  _resumeButton: {fileID: 0}
   _saveButton: {fileID: 428091515}
   _loadButton: {fileID: 1067950033}
   _mainMenuButton: {fileID: 1452955562}
