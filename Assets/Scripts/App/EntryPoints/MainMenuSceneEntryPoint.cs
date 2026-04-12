@@ -11,6 +11,10 @@ public sealed class MainMenuSceneEntryPoint : SceneEntryPointBase
 
     public override void Initialize(AppServices appServices)
     {
+        Time.timeScale = 1f;
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+
         ISettingsRepository settingsRepository = new PlayerPrefsSettingsRepository();
         LoadSettingsInteractor loadSettingsInteractor = new LoadSettingsInteractor(settingsRepository);
         SaveSettingsInteractor saveSettingsInteractor = new SaveSettingsInteractor(settingsRepository);

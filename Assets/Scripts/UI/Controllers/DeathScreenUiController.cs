@@ -4,25 +4,26 @@ using UnityEngine;
 
 public sealed class DeathScreenUiController : IDisposable
 {
+    private readonly DeathScreenModel _model;
     private readonly IPlayerHealthModel _healthModel;
     private readonly DeathScreenView _view;
     private readonly ISceneLoader _sceneLoader;
-    private readonly float _delayBeforeShow;
 
     public DeathScreenUiController(
+        DeathScreenModel model,
         IPlayerHealthModel healthModel,
         DeathScreenView view,
-        ISceneLoader sceneLoader,
-        float delayBeforeShow = 2.5f)
+        ISceneLoader sceneLoader)
     {
+        _model = model;
         _healthModel = healthModel;
         _view = view;
         _sceneLoader = sceneLoader;
-        _delayBeforeShow = delayBeforeShow;
 
         _healthModel.Died += OnDied;
         _view.RestartClicked += OnRestartClicked;
 
+        _model.IsVisible = false;
         _view.HideImmediately();
     }
 
@@ -34,11 +35,13 @@ public sealed class DeathScreenUiController : IDisposable
 
     private void OnDied()
     {
-        _view.ShowAfterDelay(_delayBeforeShow);
+        _model.IsVisible = true;
+        _view.ShowAfterDelay(_model.DelayBeforeShow);
     }
 
     private void OnRestartClicked()
     {
+        _model.IsVisible = false;
         Time.timeScale = 1f;
         _sceneLoader.ReloadCurrent();
     }

@@ -58,19 +58,28 @@ public sealed class GameSceneEntryPoint : SceneEntryPointBase
 
         IEnemySaveStateReader enemySaveStateReader = new EnemySaveStateReader();
         IEnemySaveStateWriter enemySaveStateWriter = new EnemySaveStateWriter();
+        IPauseStateService pauseStateService = new PauseStateService(_scriptsToDisableOnPause);
+
+        SaveCurrentGameInteractor saveCurrentGameInteractor = new SaveCurrentGameInteractor(
+            saveGameInteractor,
+            appServices.SceneLoader,
+            playerSaveStateReader,
+            enemySaveStateReader);
+
+        LoadCurrentGameInteractor loadCurrentGameInteractor = new LoadCurrentGameInteractor(
+            loadGameInteractor,
+            appServices.SceneLoader,
+            appServices.PendingLoadDataService,
+            playerSaveStateWriter,
+            enemySaveStateWriter);
 
         _pauseMenuController = new Ui.PauseMenu.PauseMenuController(
             new PauseMenuModel(),
             _pauseMenuView,
-            saveGameInteractor,
-            loadGameInteractor,
+            saveCurrentGameInteractor,
+            loadCurrentGameInteractor,
             appServices.SceneLoader,
-            appServices.PendingLoadDataService,
-            playerSaveStateReader,
-            playerSaveStateWriter,
-            enemySaveStateReader,
-            enemySaveStateWriter,
-            _scriptsToDisableOnPause,
+            pauseStateService,
             _mainMenuSceneName);
 
         _pauseMenuController.ApplyPendingLoadIfNeeded();
@@ -80,6 +89,7 @@ public sealed class GameSceneEntryPoint : SceneEntryPointBase
             _healthBarView);
 
         _deathScreenController = new DeathScreenUiController(
+            new DeathScreenModel(),
             _playerHealth,
             _deathScreenView,
             appServices.SceneLoader);
@@ -100,6 +110,7 @@ public sealed class GameSceneEntryPoint : SceneEntryPointBase
     private void ComposePlayer()
     {
         IPlayerInputService inputService = new UnityPlayerInputService();
+        PlayerModel playerModel = new PlayerModel();
 
         IPlayerMovement movement = new PlayerMovement(
             _playerController.transform,
@@ -113,11 +124,17 @@ public sealed class GameSceneEntryPoint : SceneEntryPointBase
             _playerController.Renderers,
             _playerController.AnimationSmoothTime);
 
-        _playerController.Construct(
+        PlayerGameplayController gameplayController = new PlayerGameplayController(
+            playerModel,
+            _playerController,
             inputService,
             _cameraController,
             movement,
-            appearance);
+            appearance,
+            _playerController.RotationSpeed,
+            _playerController.StartAnimThreshold);
+
+        _playerController.Initialize(gameplayController);
     }
 
     private void InjectPlayerIntoEnemies()

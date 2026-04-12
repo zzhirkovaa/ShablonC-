@@ -41,23 +41,10 @@ public class PlayerController : MonoBehaviour, IPlayerView
         _renderers = GetComponentsInChildren<Renderer>();
     }
 
-    public void Construct(
-        IPlayerInputService inputService,
-        ICameraYawProvider cameraYawProvider,
-        IPlayerMovement movement,
-        IPlayerAppearance appearance)
+    public void Initialize(PlayerGameplayController gameplayController)
     {
-        _gameplayController = new PlayerGameplayController(
-            new PlayerModel(),
-            this,
-            inputService,
-            cameraYawProvider,
-            movement,
-            appearance,
-            _rotationSpeed,
-            _startAnimThreshold);
-
-        _isConstructed = true;
+        _gameplayController = gameplayController;
+        _isConstructed = _gameplayController != null;
     }
 
     private void Update()

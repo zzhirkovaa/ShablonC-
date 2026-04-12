@@ -5,44 +5,29 @@ namespace Ui.PauseMenu
 {
     public sealed class PauseMenuController : IDisposable
     {
+        private readonly PauseMenuModel _model;
         private readonly PauseMenuView _view;
-        private readonly SaveGameInteractor _saveGameInteractor;
-        private readonly LoadGameInteractor _loadGameInteractor;
+        private readonly SaveCurrentGameInteractor _saveCurrentGameInteractor;
+        private readonly LoadCurrentGameInteractor _loadCurrentGameInteractor;
         private readonly ISceneLoader _sceneLoader;
-        private readonly IPendingLoadDataService _pendingLoadDataService;
-        private readonly IPlayerSaveStateReader _playerSaveStateReader;
-        private readonly IPlayerSaveStateWriter _playerSaveStateWriter;
-        private readonly IEnemySaveStateReader _enemySaveStateReader;
-        private readonly IEnemySaveStateWriter _enemySaveStateWriter;
-        private readonly MonoBehaviour[] _scriptsToDisableOnPause;
+        private readonly IPauseStateService _pauseStateService;
         private readonly string _mainMenuSceneName;
-
-        private bool _isPaused;
 
         public PauseMenuController(
             PauseMenuModel model,
             PauseMenuView view,
-            SaveGameInteractor saveGameInteractor,
-            LoadGameInteractor loadGameInteractor,
+            SaveCurrentGameInteractor saveCurrentGameInteractor,
+            LoadCurrentGameInteractor loadCurrentGameInteractor,
             ISceneLoader sceneLoader,
-            IPendingLoadDataService pendingLoadDataService,
-            IPlayerSaveStateReader playerSaveStateReader,
-            IPlayerSaveStateWriter playerSaveStateWriter,
-            IEnemySaveStateReader enemySaveStateReader,
-            IEnemySaveStateWriter enemySaveStateWriter,
-            MonoBehaviour[] scriptsToDisableOnPause,
+            IPauseStateService pauseStateService,
             string mainMenuSceneName)
         {
+            _model = model;
             _view = view;
-            _saveGameInteractor = saveGameInteractor;
-            _loadGameInteractor = loadGameInteractor;
+            _saveCurrentGameInteractor = saveCurrentGameInteractor;
+            _loadCurrentGameInteractor = loadCurrentGameInteractor;
             _sceneLoader = sceneLoader;
-            _pendingLoadDataService = pendingLoadDataService;
-            _playerSaveStateReader = playerSaveStateReader;
-            _playerSaveStateWriter = playerSaveStateWriter;
-            _enemySaveStateReader = enemySaveStateReader;
-            _enemySaveStateWriter = enemySaveStateWriter;
-            _scriptsToDisableOnPause = scriptsToDisableOnPause;
+            _pauseStateService = pauseStateService;
             _mainMenuSceneName = mainMenuSceneName;
 
             _view.ToggleRequested += OnToggleRequested;
@@ -65,15 +50,12 @@ namespace Ui.PauseMenu
 
         public void ApplyPendingLoadIfNeeded()
         {
-            if (!_pendingLoadDataService.HasPendingData)
-                return;
-
-            ApplyLoadedData(_pendingLoadDataService.Consume());
+            _loadCurrentGameInteractor.ApplyPendingLoadIfNeeded();
         }
 
         private void OnToggleRequested()
         {
-            if (_isPaused)
+            if (_model.IsPaused)
                 ResumeGame();
             else
                 PauseGame();
@@ -86,81 +68,43 @@ namespace Ui.PauseMenu
 
         private void OnSaveClicked()
         {
-            _saveGameInteractor.Execute(
-                _sceneLoader.CurrentSceneName,
-                _playerSaveStateReader.Read(),
-                _enemySaveStateReader.Read());
+            _saveCurrentGameInteractor.Execute();
         }
 
         private void OnLoadClicked()
         {
-            GameProgressModel progress = _loadGameInteractor.Execute();
-            if (progress == null)
+            LoadCurrentGameResult result = _loadCurrentGameInteractor.Execute();
+            if (result == LoadCurrentGameResult.NoData)
                 return;
 
-            Time.timeScale = 1f;
-            _isPaused = false;
+            _model.IsPaused = false;
+            _pauseStateService.ExitPause();
 
-            if (progress.SceneName == _sceneLoader.CurrentSceneName)
+            if (result == LoadCurrentGameResult.AppliedInCurrentScene)
             {
-                ApplyLoadedData(progress);
                 _view.Hide();
-                SetGameplayScriptsEnabled(true);
-                Cursor.lockState = CursorLockMode.Locked;
-                Cursor.visible = false;
-                return;
             }
-
-            _pendingLoadDataService.Set(progress);
-            _sceneLoader.Load(progress.SceneName);
         }
 
         private void OnMainMenuClicked()
         {
-            Time.timeScale = 1f;
+            _model.IsPaused = false;
+            _pauseStateService.ExitPause();
             _sceneLoader.Load(_mainMenuSceneName);
-        }
-
-        private void ApplyLoadedData(GameProgressModel progress)
-        {
-            _playerSaveStateWriter.Apply(progress.PlayerData);
-            _enemySaveStateWriter.Apply(progress.Enemies);
         }
 
         private void PauseGame()
         {
+            _model.IsPaused = true;
             _view.Show();
-            Time.timeScale = 0f;
-            _isPaused = true;
-
-            SetGameplayScriptsEnabled(false);
-
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
+            _pauseStateService.EnterPause();
         }
 
         private void ResumeGame()
         {
+            _model.IsPaused = false;
             _view.Hide();
-            Time.timeScale = 1f;
-            _isPaused = false;
-
-            SetGameplayScriptsEnabled(true);
-
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
-        }
-
-        private void SetGameplayScriptsEnabled(bool enabledState)
-        {
-            if (_scriptsToDisableOnPause == null)
-                return;
-
-            foreach (MonoBehaviour script in _scriptsToDisableOnPause)
-            {
-                if (script != null)
-                    script.enabled = enabledState;
-            }
+            _pauseStateService.ExitPause();
         }
     }
 }
