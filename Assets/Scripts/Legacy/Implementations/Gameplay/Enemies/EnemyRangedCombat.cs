@@ -1,33 +1,39 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 
 public class EnemyRangedCombat : MonoBehaviour
 {
-    [Header("Íàñòðîéêè ñòðåëüáû")]
+    [Header("ÐÐ°ÑÑ‚Ñ€Ð¾Ð¹ÐºÐ¸ ÑÑ‚Ñ€ÐµÐ»ÑŒÐ±Ñ‹")]
     public GameObject projectilePrefab;
     public Transform firePoint;
     public float attackCooldown = 3f;
 
-    private float _nextAttackTime;
     private Transform _player;
+    private CooldownState _cooldownState;
+    private RangedProjectileAttackLogic _attackLogic;
 
-    void Start()
+    private void Awake()
+    {
+        _cooldownState = new CooldownState(attackCooldown);
+        _attackLogic = new RangedProjectileAttackLogic();
+    }
+
+    private void Start()
     {
         GameObject p = GameObject.FindGameObjectWithTag("player");
         if (p != null) _player = p.transform;
     }
 
-    public bool CanAttack => Time.time >= _nextAttackTime;
+    private void Update()
+    {
+        _cooldownState.Tick(Time.deltaTime);
+    }
 
-    public void ResetCooldown() => _nextAttackTime = Time.time + attackCooldown;
+    public bool CanAttack => _cooldownState.IsReady;
+
+    public void ResetCooldown() => _cooldownState.Trigger();
 
     public void Shoot()
     {
-        if (_player == null || projectilePrefab == null || firePoint == null) return;
-        Vector3 lookAtTarget = new Vector3(_player.position.x, transform.position.y, _player.position.z);
-        transform.LookAt(lookAtTarget);
-        GameObject projectile = Instantiate(projectilePrefab, firePoint.position, firePoint.rotation);
-        Vector3 aimPoint = _player.position + Vector3.up * 0.8f;
-        Vector3 direction = (aimPoint - firePoint.position).normalized;
-        projectile.transform.forward = direction;
+        _attackLogic.ShootAtTarget(transform, _player, projectilePrefab, firePoint);
     }
 }

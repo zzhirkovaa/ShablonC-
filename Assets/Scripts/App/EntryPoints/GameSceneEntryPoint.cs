@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem.UI;
 using Player.Core;
@@ -117,7 +117,8 @@ public sealed class GameSceneEntryPoint : SceneEntryPointBase
             _playerController.CharacterController,
             _playerController.WalkSpeed,
             _playerController.RunSpeed,
-            _playerController.RotationSpeed);
+            _playerController.RotationSpeed,
+            _cameraController);
 
         IPlayerAppearance appearance = new PlayerAppearance(
             _playerController.Animator,

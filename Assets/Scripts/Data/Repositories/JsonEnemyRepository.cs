@@ -27,7 +27,9 @@ public sealed class JsonEnemyRepository : IEnemyRepository
                 EnemyId = enemy.EnemyId,
                 PositionX = enemy.PosX,
                 PositionY = enemy.PosY,
-                PositionZ = enemy.PosZ
+                PositionZ = enemy.PosZ,
+                Health = enemy.Health,
+                IsDead = enemy.IsDead
             });
         }
 
@@ -48,7 +50,9 @@ public sealed class JsonEnemyRepository : IEnemyRepository
                     EnemyId = enemy.EnemyId,
                     PosX = enemy.PositionX,
                     PosY = enemy.PositionY,
-                    PosZ = enemy.PositionZ
+                    PosZ = enemy.PositionZ,
+                    Health = enemy.Health,
+                    IsDead = enemy.IsDead
                 });
             }
         }

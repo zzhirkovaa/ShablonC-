@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using Player.Interfaces;
 
 namespace Player.Core
@@ -10,22 +10,29 @@ namespace Player.Core
 
         private readonly Transform _playerTransform;
         private readonly float _walkSpeed;
-        private readonly float _runSpeed;  
+        private readonly float _runSpeed;
         private readonly float _rotationSpeed;
         private readonly CharacterController _controller;
+        private readonly ICameraPlanarBasisProvider _cameraBasisProvider;
 
         private Vector3 _moveDirection;
         private float _verticalVelocity;
-        private float _currentSpeed; 
+        private float _currentSpeed;
 
-        public PlayerMovement(Transform transform, CharacterController controller,
-                             float walkSpeed, float runSpeed, float rotationSpeed)  
+        public PlayerMovement(
+            Transform transform,
+            CharacterController controller,
+            float walkSpeed,
+            float runSpeed,
+            float rotationSpeed,
+            ICameraPlanarBasisProvider cameraBasisProvider)
         {
             _playerTransform = transform;
             _controller = controller;
             _walkSpeed = walkSpeed;
             _runSpeed = runSpeed;
             _rotationSpeed = rotationSpeed;
+            _cameraBasisProvider = cameraBasisProvider;
             _verticalVelocity = 0;
             _currentSpeed = 0;
         }
@@ -40,17 +47,10 @@ namespace Player.Core
             }
 
             float moveSpeed = isRunning ? _runSpeed : _walkSpeed;
-            _currentSpeed = moveSpeed;  
+            _currentSpeed = moveSpeed;
 
-            var camera = Camera.main;
-            var forward = camera.transform.forward;
-            var right = camera.transform.right;
-
-            forward.y = 0;
-            right.y = 0;
-
-            forward.Normalize();
-            right.Normalize();
+            Vector3 forward = _cameraBasisProvider != null ? _cameraBasisProvider.ForwardOnPlane : _playerTransform.forward;
+            Vector3 right = _cameraBasisProvider != null ? _cameraBasisProvider.RightOnPlane : _playerTransform.right;
 
             _moveDirection = (forward * input.y + right * input.x).normalized;
         }
@@ -78,7 +78,7 @@ namespace Player.Core
                 _verticalVelocity += GRAVITY_FORCE * Time.deltaTime;
             }
 
-            var moveWithGravity = _moveDirection * _currentSpeed * Time.deltaTime; 
+            var moveWithGravity = _moveDirection * _currentSpeed * Time.deltaTime;
             moveWithGravity.y = _verticalVelocity * Time.deltaTime;
 
             _controller.Move(moveWithGravity);
@@ -89,7 +89,7 @@ namespace Player.Core
             return _moveDirection;
         }
 
-        public float GetCurrentSpeed() 
+        public float GetCurrentSpeed()
         {
             return _currentSpeed;
         }

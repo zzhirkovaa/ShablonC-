@@ -1,6 +1,6 @@
-using UnityEngine;
+﻿using UnityEngine;
 
-public class CameraController : MonoBehaviour, ICameraYawProvider
+public class CameraController : MonoBehaviour, ICameraYawProvider, ICameraPlanarBasisProvider
 {
     [Header("Target Settings")]
     [SerializeField] private Transform _target;
@@ -40,4 +40,24 @@ public class CameraController : MonoBehaviour, ICameraYawProvider
     }
 
     public float GetYaw() => _yaw;
+
+    public Vector3 ForwardOnPlane
+    {
+        get
+        {
+            Vector3 forward = transform.forward;
+            forward.y = 0f;
+            return forward.normalized;
+        }
+    }
+
+    public Vector3 RightOnPlane
+    {
+        get
+        {
+            Vector3 right = transform.right;
+            right.y = 0f;
+            return right.normalized;
+        }
+    }
 }

@@ -6,12 +6,10 @@ public class PlayerHealth : MonoBehaviour, IDamageable, IPlayerHealthModel
     [Header("Настройки здоровья")]
     [SerializeField] private float maxHealth = 100f;
 
-    private float currentHealth;
-    private bool isDead;
-
     private Animator _animator;
+    private PlayerHealthState _state;
 
-    public float CurrentHealth => currentHealth;
+    public float CurrentHealth => _state.CurrentHealth;
     public float MaxHealth => maxHealth;
 
     public event Action<float, float> OnHealthChanged;
@@ -32,48 +30,48 @@ public class PlayerHealth : MonoBehaviour, IDamageable, IPlayerHealthModel
     private void Awake()
     {
         _animator = GetComponent<Animator>();
-        currentHealth = maxHealth;
-        isDead = false;
+        _state = new PlayerHealthState(maxHealth);
+        _state.HealthChanged += RaiseHealthChanged;
+        _state.Died += OnDiedInternal;
     }
 
     private void Start()
     {
-        OnHealthChanged?.Invoke(currentHealth, maxHealth);
+        _state.PublishCurrentState();
+    }
+
+    private void OnDestroy()
+    {
+        if (_state == null)
+            return;
+
+        _state.HealthChanged -= RaiseHealthChanged;
+        _state.Died -= OnDiedInternal;
     }
 
     public void TakeDamage(DamageInfo damage)
     {
-        if (isDead) return;
-
-        currentHealth -= damage.Amount;
+        if (_state.IsDead)
+            return;
 
         if (_animator != null)
             _animator.SetTrigger("Hurt");
 
-        if (currentHealth <= 0f)
-        {
-            currentHealth = 0f;
-            Die();
-        }
-
-        OnHealthChanged?.Invoke(currentHealth, maxHealth);
+        _state.ApplyDamage(damage.Amount);
     }
 
     public void RestoreHealth(float value)
     {
-        currentHealth = Mathf.Clamp(value, 0f, maxHealth);
-
-        if (currentHealth > 0f)
-            isDead = false;
-
-        OnHealthChanged?.Invoke(currentHealth, maxHealth);
+        _state.RestoreHealth(value);
     }
 
-    private void Die()
+    private void RaiseHealthChanged(float currentHealth, float maxHealthValue)
     {
-        if (isDead) return;
-        isDead = true;
+        OnHealthChanged?.Invoke(currentHealth, maxHealthValue);
+    }
 
+    private void OnDiedInternal()
+    {
         if (_animator != null)
             _animator.SetTrigger("Die");
 

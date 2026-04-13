@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public class EnemyCombat : MonoBehaviour
 {
@@ -6,32 +6,35 @@ public class EnemyCombat : MonoBehaviour
     public float attackCooldown = 5f;
     public float attackVisualDistance = 3.5f;
 
-    private float _nextAttackTime;
     private Transform _player;
+    private EnemyCombatLogic _combatLogic;
 
     public void Construct(Transform playerTransform)
     {
         _player = playerTransform;
     }
 
-    public bool CanAttack => Time.time >= _nextAttackTime;
+    private void Awake()
+    {
+        _combatLogic = new EnemyCombatLogic(damageAmount, attackCooldown, attackVisualDistance);
+    }
+
+    public bool CanAttack => _combatLogic != null && _combatLogic.CanAttack;
 
     public void ResetCooldownAfterTrigger()
     {
-        _nextAttackTime = Time.time + attackCooldown;
+        _combatLogic?.ResetCooldownAfterTrigger();
     }
 
     public void Attack()
     {
-        if (_player == null) return;
+        if (_player == null || _combatLogic == null)
+            return;
 
-        float dist = Vector3.Distance(transform.position, _player.position);
-
-        if (dist <= attackVisualDistance &&
+        if (_combatLogic.TryCreateDamage(transform.position, _player, out DamageInfo damage) &&
             _player.TryGetComponent<IDamageable>(out var victim))
         {
-            DamageInfo info = new DamageInfo(damageAmount, DamageType.Physical);
-            victim.TakeDamage(info);
+            victim.TakeDamage(damage);
         }
     }
 }

@@ -1,30 +1,30 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 [RequireComponent(typeof(PlayerHealth))]
 [RequireComponent(typeof(PlayerRangedCombat))]
 public class PlayerStatsProvider : MonoBehaviour, IPlayerStatsProvider
 {
-    private PlayerHealth _health;
-    private PlayerRangedCombat _rangedCombat;
+    private PlayerStatsSnapshot _snapshot;
 
-    public float CurrentHp => _health.CurrentHealth;
-    public float MaxHp => _health.MaxHealth;
+    public float CurrentHp => _snapshot.CurrentHp;
+    public float MaxHp => _snapshot.MaxHp;
 
-    public float CurrentAbilityCooldown => _rangedCombat.CurrentCooldown;
+    public float CurrentAbilityCooldown => _snapshot.CurrentAbilityCooldown;
 
     private void Awake()
     {
-        _health = GetComponent<PlayerHealth>();
-        _rangedCombat = GetComponent<PlayerRangedCombat>();
+        _snapshot = new PlayerStatsSnapshot(
+            GetComponent<PlayerHealth>(),
+            GetComponent<PlayerRangedCombat>());
     }
 
     public void RestoreHp(float value)
     {
-        _health.RestoreHealth(value);
+        _snapshot.RestoreHp(value);
     }
 
     public void RestoreAbilityCooldown(float value)
     {
-        _rangedCombat.RestoreCooldown(value);
+        _snapshot.RestoreAbilityCooldown(value);
     }
 }

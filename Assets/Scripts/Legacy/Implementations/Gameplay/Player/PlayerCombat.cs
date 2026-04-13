@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public class PlayerCombat : MonoBehaviour
 {
@@ -8,31 +8,21 @@ public class PlayerCombat : MonoBehaviour
     public Transform attackPoint;
     public LayerMask enemyLayers;
 
+    private PlayerCombatLogic _combatLogic;
+
+    private void Awake()
+    {
+        _combatLogic = new PlayerCombatLogic(attackDamage, attackRange, enemyLayers);
+    }
+
     public void Hit()
     {
-        PerformAttack(DamageType.Physical);
+        _combatLogic.PerformAttack(attackPoint, DamageType.Physical);
     }
 
     public void MagicHit()
     {
-        PerformAttack(DamageType.Magical);
-    }
-
-    private void PerformAttack(DamageType type)
-    {
-        if (attackPoint == null) return;
-
-        Collider[] hitEnemies = Physics.OverlapSphere(attackPoint.position, attackRange, enemyLayers);
-
-        DamageInfo info = new DamageInfo(attackDamage, type);
-
-        foreach (Collider enemy in hitEnemies)
-        {
-            if (enemy.TryGetComponent<IDamageable>(out var victim))
-            {
-                victim.TakeDamage(info);
-            }
-        }
+        _combatLogic.PerformAttack(attackPoint, DamageType.Magical);
     }
 
     private void OnDrawGizmos()

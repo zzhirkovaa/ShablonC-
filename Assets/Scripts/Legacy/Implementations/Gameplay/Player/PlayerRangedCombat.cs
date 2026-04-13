@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public class PlayerRangedCombat : MonoBehaviour
 {
@@ -7,47 +7,38 @@ public class PlayerRangedCombat : MonoBehaviour
     [SerializeField] private float _attackCooldown = 3f;
     [SerializeField] private AbilityCooldownUI _cooldownUI;
 
-    private float _cooldownTimer = 0f;
     private Animator _animator;
+    private CooldownState _cooldownState;
 
-    public float CurrentCooldown => _cooldownTimer;
-    public float MaxCooldown => _attackCooldown;
+    public float CurrentCooldown => _cooldownState.CurrentCooldown;
+    public float MaxCooldown => _cooldownState.MaxCooldown;
 
     private void Awake()
     {
         _animator = GetComponent<Animator>();
+        _cooldownState = new CooldownState(_attackCooldown);
     }
 
     private void Update()
     {
-        if (_cooldownTimer > 0f)
-        {
-            _cooldownTimer -= Time.deltaTime;
-
-            if (_cooldownTimer < 0f)
-                _cooldownTimer = 0f;
-        }
+        _cooldownState.Tick(Time.deltaTime);
 
         if (_cooldownUI != null)
-        {
-            _cooldownUI.UpdateFill(_cooldownTimer, _attackCooldown);
-        }
+            _cooldownUI.UpdateFill(_cooldownState.CurrentCooldown, _cooldownState.MaxCooldown);
 
-        if (Input.GetMouseButtonDown(1) && _cooldownTimer <= 0f)
+        if (Input.GetMouseButtonDown(1) && _cooldownState.IsReady)
         {
             _animator.SetTrigger("Shoot");
-            _cooldownTimer = _attackCooldown;
+            _cooldownState.Trigger();
         }
     }
 
     public void RestoreCooldown(float value)
     {
-        _cooldownTimer = Mathf.Clamp(value, 0f, _attackCooldown);
+        _cooldownState.Restore(value);
 
         if (_cooldownUI != null)
-        {
-            _cooldownUI.UpdateFill(_cooldownTimer, _attackCooldown);
-        }
+            _cooldownUI.UpdateFill(_cooldownState.CurrentCooldown, _cooldownState.MaxCooldown);
     }
 
     public void LaunchProjectile()

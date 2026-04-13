@@ -23,4 +23,6 @@ public class EnemySaveData
     public float PosX;
     public float PosY;
     public float PosZ;
+    public float Health;
+    public bool IsDead;
 }

@@ -6,16 +6,23 @@ public sealed class EnemySaveStateReader : IEnemySaveStateReader
     public IReadOnlyList<EnemyDataModel> Read()
     {
         List<EnemyDataModel> result = new();
-        EnemySaveId[] enemies = Object.FindObjectsOfType<EnemySaveId>();
+        HashSet<string> usedIds = new();
 
-        foreach (EnemySaveId enemy in enemies)
+        foreach (EnemySaveId enemy in EnemySaveId.RegisteredInstances)
         {
+            if (enemy == null || string.IsNullOrWhiteSpace(enemy.Id) || !usedIds.Add(enemy.Id))
+                continue;
+
+            EnemyHealth enemyHealth = enemy.GetComponent<EnemyHealth>();
+
             result.Add(new EnemyDataModel
             {
                 EnemyId = enemy.Id,
                 PositionX = enemy.transform.position.x,
                 PositionY = enemy.transform.position.y,
-                PositionZ = enemy.transform.position.z
+                PositionZ = enemy.transform.position.z,
+                Health = enemyHealth != null ? enemyHealth.CurrentHealth : 0f,
+                IsDead = enemyHealth != null ? enemyHealth.IsDead : !enemy.gameObject.activeSelf
             });
         }
 

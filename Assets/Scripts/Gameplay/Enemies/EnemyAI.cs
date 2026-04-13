@@ -1,18 +1,19 @@
-using UnityEngine;
+п»їusing UnityEngine;
 
 public class EnemyAI : MonoBehaviour
 {
-    [Header("Параметры обнаружения")]
+    [Header("РџР°СЂР°РјРµС‚СЂС‹ РѕР±РЅР°СЂСѓР¶РµРЅРёСЏ")]
     public float detectionRadius = 10f;
     public float attackRange = 2.2f;
 
-    [Header("Параметры движения")]
+    [Header("РџР°СЂР°РјРµС‚СЂС‹ РґРІРёР¶РµРЅРёСЏ")]
     public float moveSpeed = 3f;
 
     private Transform _playerTransform;
     private Animator _anim;
     private EnemyCombat _combat;
     private IEnemyMovementBounds _movementBounds;
+    private EnemyAiBrain _brain;
 
     public void Construct(Transform playerTransform, IEnemyMovementBounds movementBounds)
     {
@@ -24,20 +25,30 @@ public class EnemyAI : MonoBehaviour
     {
         _anim = GetComponent<Animator>();
         _combat = GetComponent<EnemyCombat>();
+        _brain = new EnemyAiBrain(detectionRadius, attackRange, moveSpeed);
     }
 
     private void Update()
     {
         if (_playerTransform == null) return;
 
-        float dist = Vector3.Distance(transform.position, _playerTransform.position);
+        EnemyAiDecision decision = _brain.Evaluate(
+            transform.position,
+            _playerTransform.position,
+            _movementBounds);
 
-        if (dist <= attackRange)
-            AttackState();
-        else if (dist <= detectionRadius)
-            FollowState();
-        else
-            IdleState();
+        switch (decision.Type)
+        {
+            case EnemyAiDecisionType.Attack:
+                AttackState(decision.Direction);
+                break;
+            case EnemyAiDecisionType.Follow:
+                FollowState(decision.Direction, decision.TargetPosition);
+                break;
+            default:
+                IdleState();
+                break;
+        }
     }
 
     private void IdleState()
@@ -46,31 +57,26 @@ public class EnemyAI : MonoBehaviour
         _anim.ResetTrigger("Attack");
     }
 
-    private void FollowState()
+    private void FollowState(Vector3 direction, Vector3 nextPosition)
     {
         _anim.ResetTrigger("Attack");
         _anim.SetBool("IsRunning", true);
 
-        Vector3 dir = (_playerTransform.position - transform.position).normalized;
-        dir.y = 0f;
-
-        Vector3 nextPosition = transform.position + dir * moveSpeed * Time.deltaTime;
-
-        if (_movementBounds != null)
-            nextPosition = _movementBounds.ClampPosition(nextPosition);
-
         transform.position = nextPosition;
 
-        if (dir != Vector3.zero)
+        if (direction != Vector3.zero)
         {
-            Quaternion targetRot = Quaternion.LookRotation(dir);
+            Quaternion targetRot = Quaternion.LookRotation(direction);
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, Time.deltaTime * 10f);
         }
     }
 
-    private void AttackState()
+    private void AttackState(Vector3 lookDirection)
     {
         _anim.SetBool("IsRunning", false);
+
+        if (lookDirection != Vector3.zero)
+            transform.rotation = Quaternion.LookRotation(lookDirection);
 
         bool isAlreadyAttacking = _anim.GetCurrentAnimatorStateInfo(0).IsName("Attack");
 
