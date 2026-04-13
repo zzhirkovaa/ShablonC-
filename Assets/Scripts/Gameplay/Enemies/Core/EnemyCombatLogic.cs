@@ -15,21 +15,18 @@ public sealed class EnemyCombatLogic
         _attackVisualDistance = attackVisualDistance;
     }
 
-    public bool CanAttack => Time.time >= _nextAttackTime;
+    public bool CanAttack(float currentTime) => currentTime >= _nextAttackTime;
 
-    public void ResetCooldownAfterTrigger()
+    public void ResetCooldownAfterTrigger(float currentTime)
     {
-        _nextAttackTime = Time.time + _attackCooldown;
+        _nextAttackTime = currentTime + _attackCooldown;
     }
 
-    public bool TryCreateDamage(Vector3 attackerPosition, Transform playerTransform, out DamageInfo damage)
+    public bool TryCreateDamage(Vector3 attackerPosition, Vector3 targetPosition, out DamageInfo damage)
     {
         damage = default;
 
-        if (playerTransform == null)
-            return false;
-
-        float distance = Vector3.Distance(attackerPosition, playerTransform.position);
+        float distance = Vector3.Distance(attackerPosition, targetPosition);
         if (distance > _attackVisualDistance)
             return false;
 

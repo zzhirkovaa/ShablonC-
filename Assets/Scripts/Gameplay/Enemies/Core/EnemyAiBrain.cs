@@ -16,7 +16,8 @@ public sealed class EnemyAiBrain
     public EnemyAiDecision Evaluate(
         Vector3 enemyPosition,
         Vector3 playerPosition,
-        IEnemyMovementBounds movementBounds)
+        IEnemyMovementBounds movementBounds,
+        float deltaTime)
     {
         float distance = Vector3.Distance(enemyPosition, playerPosition);
         if (distance <= _attackRange)
@@ -31,7 +32,7 @@ public sealed class EnemyAiBrain
             Vector3 direction = (playerPosition - enemyPosition).normalized;
             direction.y = 0f;
 
-            Vector3 nextPosition = enemyPosition + direction * _moveSpeed * Time.deltaTime;
+            Vector3 nextPosition = enemyPosition + direction * _moveSpeed * deltaTime;
             if (movementBounds != null)
                 nextPosition = movementBounds.ClampPosition(nextPosition);
 

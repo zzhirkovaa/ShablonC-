@@ -32,7 +32,8 @@ public class EnemyRangedAI : MonoBehaviour
         EnemyAiDecision decision = _brain.Evaluate(
             transform.position,
             _playerTransform.position,
-            _movementBounds);
+            _movementBounds,
+            Time.deltaTime);
 
         switch (decision.Type)
         {

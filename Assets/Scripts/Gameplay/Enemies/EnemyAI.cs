@@ -35,7 +35,8 @@ public class EnemyAI : MonoBehaviour
         EnemyAiDecision decision = _brain.Evaluate(
             transform.position,
             _playerTransform.position,
-            _movementBounds);
+            _movementBounds,
+            Time.deltaTime);
 
         switch (decision.Type)
         {
@@ -80,10 +81,10 @@ public class EnemyAI : MonoBehaviour
 
         bool isAlreadyAttacking = _anim.GetCurrentAnimatorStateInfo(0).IsName("Attack");
 
-        if (_combat.CanAttack && !isAlreadyAttacking)
+        if (_combat.CanAttack(Time.time) && !isAlreadyAttacking)
         {
             _anim.SetTrigger("Attack");
-            _combat.ResetCooldownAfterTrigger();
+            _combat.ResetCooldownAfterTrigger(Time.time);
         }
     }
 }

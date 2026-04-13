@@ -19,11 +19,11 @@ public class EnemyCombat : MonoBehaviour
         _combatLogic = new EnemyCombatLogic(damageAmount, attackCooldown, attackVisualDistance);
     }
 
-    public bool CanAttack => _combatLogic != null && _combatLogic.CanAttack;
+    public bool CanAttack(float currentTime) => _combatLogic != null && _combatLogic.CanAttack(currentTime);
 
-    public void ResetCooldownAfterTrigger()
+    public void ResetCooldownAfterTrigger(float currentTime)
     {
-        _combatLogic?.ResetCooldownAfterTrigger();
+        _combatLogic?.ResetCooldownAfterTrigger(currentTime);
     }
 
     public void Attack()
@@ -31,7 +31,7 @@ public class EnemyCombat : MonoBehaviour
         if (_player == null || _combatLogic == null)
             return;
 
-        if (_combatLogic.TryCreateDamage(transform.position, _player, out DamageInfo damage) &&
+        if (_combatLogic.TryCreateDamage(transform.position, _player.position, out DamageInfo damage) &&
             _player.TryGetComponent<IDamageable>(out var victim))
         {
             victim.TakeDamage(damage);

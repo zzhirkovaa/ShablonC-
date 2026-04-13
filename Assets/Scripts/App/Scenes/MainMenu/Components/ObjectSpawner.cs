@@ -2,7 +2,7 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
-public class TimedSpawner : MonoBehaviour
+public class ObjectSpawner : MonoBehaviour
 {
     [System.Serializable]
     public class SpawnItem
@@ -14,7 +14,7 @@ public class TimedSpawner : MonoBehaviour
 
     public List<SpawnItem> objectsToSpawn = new List<SpawnItem>();
 
-    void Start()
+    private void Start()
     {
         foreach (SpawnItem item in objectsToSpawn)
         {
@@ -22,7 +22,7 @@ public class TimedSpawner : MonoBehaviour
         }
     }
 
-    IEnumerator SpawnWithDelay(SpawnItem item)
+    private IEnumerator SpawnWithDelay(SpawnItem item)
     {
         yield return new WaitForSeconds(item.spawnTime);
 
