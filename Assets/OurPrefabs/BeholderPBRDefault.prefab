@@ -560,6 +560,7 @@ GameObject:
   - component: {fileID: 8820299194430629109}
   - component: {fileID: 3433554810175735652}
   - component: {fileID: 4360253831299409067}
+  - component: {fileID: 8370534473905554787}
   m_Layer: 0
   m_Name: BeholderPBRDefault
   m_TagString: Untagged
@@ -637,6 +638,19 @@ MonoBehaviour:
   projectilePrefab: {fileID: 6491440943103840625, guid: 7071ba29fbdfcb54fb3dd3e359e91959, type: 3}
   firePoint: {fileID: 6482991555812343194}
   attackCooldown: 3
+--- !u!114 &8370534473905554787
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2587616710610786953}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b9edec71d34e2746abfa7d0377cee90, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemySaveId
+  _id: 
 --- !u!1 &2712502079573514494
 GameObject:
   m_ObjectHideFlags: 0
