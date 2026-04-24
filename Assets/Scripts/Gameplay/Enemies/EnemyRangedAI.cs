@@ -1,88 +1,54 @@
-﻿using UnityEngine;
+using UnityEngine;
 
-public class EnemyRangedAI : MonoBehaviour
+public class EnemyRangedAI : EnemyStatefulAIBase
 {
+    [Header("Параметры обнаружения")]
     public float detectionRadius = 20f;
     public float attackRange = 12f;
+
+    [Header("Параметры движения")]
     public float moveSpeed = 2f;
+    public float rotationSpeed = 5f;
+
+    [Header("Параметры бегства")]
+    public float fleeDuration = 3f;
+    public float fleeCooldownDuration = 3.5f;
+    [Range(0.05f, 1f)] public float fleeHealthThreshold = 0.3f;
+    public float fleeSafeDistanceMultiplier = 1.75f;
+    public bool fleeOnMeleeHit = true;
+    public bool fleeOnLowHealth = true;
 
     private Transform _playerTransform;
-    private Animator _anim;
     private EnemyRangedCombat _combat;
     private IEnemyMovementBounds _movementBounds;
-    private EnemyAiBrain _brain;
 
     public void Construct(Transform playerTransform, IEnemyMovementBounds movementBounds)
     {
         _playerTransform = playerTransform;
         _movementBounds = movementBounds;
+        UpdateContextBindings(_playerTransform, _movementBounds);
     }
 
     private void Awake()
     {
-        _anim = GetComponent<Animator>();
         _combat = GetComponent<EnemyRangedCombat>();
-        _brain = new EnemyAiBrain(detectionRadius, attackRange, moveSpeed);
-    }
-
-    private void Update()
-    {
-        if (_playerTransform == null) return;
-
-        EnemyAiDecision decision = _brain.Evaluate(
-            transform.position,
-            _playerTransform.position,
+        InitializeStateMachine(
+            _playerTransform,
             _movementBounds,
-            Time.deltaTime);
-
-        switch (decision.Type)
-        {
-            case EnemyAiDecisionType.Attack:
-                AttackState(decision.Direction);
-                break;
-            case EnemyAiDecisionType.Follow:
-                FollowState(decision.Direction, decision.TargetPosition);
-                break;
-            default:
-                IdleState();
-                break;
-        }
+            detectionRadius,
+            attackRange,
+            moveSpeed,
+            rotationSpeed,
+            fleeDuration,
+            fleeCooldownDuration,
+            fleeHealthThreshold,
+            fleeSafeDistanceMultiplier,
+            fleeOnMeleeHit,
+            fleeOnLowHealth);
     }
 
-    private void AttackState(Vector3 lookDirection)
+    protected override IEnemyState CreateAttackState(EnemyContext context, EnemyStateMachine stateMachine)
     {
-        _anim.SetBool("IsRunning", false);
-
-        if (lookDirection != Vector3.zero)
-            transform.rotation = Quaternion.LookRotation(lookDirection);
-
-        bool isAlreadyAttacking = _anim.GetCurrentAnimatorStateInfo(0).IsName("Attack");
-
-        if (_combat.CanAttack && !isAlreadyAttacking)
-        {
-            _anim.SetTrigger("Attack");
-            _combat.ResetCooldown();
-        }
-    }
-
-    private void FollowState(Vector3 direction, Vector3 nextPosition)
-    {
-        _anim.SetBool("IsRunning", true);
-        _anim.ResetTrigger("Attack");
-
-        transform.position = nextPosition;
-
-        if (direction != Vector3.zero)
-        {
-            transform.rotation = Quaternion.Slerp(
-                transform.rotation,
-                Quaternion.LookRotation(direction),
-                Time.deltaTime * 5f);
-        }
-    }
-
-    private void IdleState()
-    {
-        _anim.SetBool("IsRunning", false);
+        return new EnemyRangedAttackState(context, stateMachine, _combat);
     }
 }

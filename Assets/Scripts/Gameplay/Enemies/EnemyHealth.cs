@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.AI;
@@ -18,6 +18,7 @@ public class EnemyHealth : MonoBehaviour, IDamageable, IHealth
     private Animator _animator;
     private EnemyHealthState _state;
     private Coroutine _despawnCoroutine;
+    private EnemyContext _fleeContext;
 
     private void Awake()
     {
@@ -41,10 +42,27 @@ public class EnemyHealth : MonoBehaviour, IDamageable, IHealth
         _state.Died -= Die;
     }
 
+    public void SetFleeContext(EnemyContext context)
+    {
+        _fleeContext = context;
+    }
+
     public void TakeDamage(DamageInfo damage)
     {
         if (!_state.ApplyDamage(damage.Amount))
             return;
+
+        if (_fleeContext != null)
+        {
+            if (damage.Type == DamageType.Physical && _fleeContext.FleeOnMeleeHit)
+            {
+                _fleeContext.RequestFlee(EnemyFleeReason.MeleeHit, wasMeleeHit: true);
+            }
+            else if (_fleeContext.FleeOnLowHealth && _fleeContext.IsHealthCritical)
+            {
+                _fleeContext.RequestFlee(EnemyFleeReason.LowHealth);
+            }
+        }
 
         Debug.Log($"{gameObject.name} получил {damage.Type} урон. Осталось ХП: {_state.CurrentHealth}");
     }

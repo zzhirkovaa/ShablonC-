@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 public class EnemyRangedCombat : MonoBehaviour
 {
@@ -17,10 +17,19 @@ public class EnemyRangedCombat : MonoBehaviour
         _attackLogic = new RangedProjectileAttackLogic();
     }
 
+    public void Construct(Transform playerTransform)
+    {
+        _player = playerTransform;
+    }
+
     private void Start()
     {
-        GameObject p = GameObject.FindGameObjectWithTag("player");
-        if (p != null) _player = p.transform;
+        if (_player != null)
+            return;
+
+        GameObject playerObject = GameObject.FindGameObjectWithTag("player");
+        if (playerObject != null)
+            _player = playerObject.transform;
     }
 
     private void Update()
@@ -34,6 +43,9 @@ public class EnemyRangedCombat : MonoBehaviour
 
     public void Shoot()
     {
+        if (_player == null)
+            return;
+
         _attackLogic.ShootAtTarget(transform, _player, projectilePrefab, firePoint);
     }
 }

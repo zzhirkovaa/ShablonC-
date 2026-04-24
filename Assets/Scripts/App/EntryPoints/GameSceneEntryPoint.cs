@@ -173,6 +173,10 @@ public sealed class GameSceneEntryPoint : SceneEntryPointBase
         EnemyCombat[] enemiesCombat = Object.FindObjectsOfType<EnemyCombat>();
         foreach (EnemyCombat enemyCombat in enemiesCombat)
             enemyCombat.Construct(_playerController.transform);
+
+        EnemyRangedCombat[] rangedCombat = Object.FindObjectsOfType<EnemyRangedCombat>();
+        foreach (EnemyRangedCombat enemyCombat in rangedCombat)
+            enemyCombat.Construct(_playerController.transform);
     }
 
     private void OnDestroy()
