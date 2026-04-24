@@ -24,6 +24,9 @@ public sealed class GameSceneEntryPoint : SceneEntryPointBase
     [SerializeField] private MonoBehaviour[] _scriptsToDisableOnPause;
     [SerializeField] private string _mainMenuSceneName = "MainMenu";
 
+    [Header("Boss")]
+    [SerializeField] private string _bossObjectName = "Boss";
+
     private Ui.PauseMenu.PauseMenuController _pauseMenuController;
     private HealthBarUiController _healthBarController;
     private DeathScreenUiController _deathScreenController;
@@ -94,7 +97,26 @@ public sealed class GameSceneEntryPoint : SceneEntryPointBase
             _deathScreenView,
             appServices.SceneLoader);
 
+        InjectBoss();
         InjectPlayerIntoEnemies();
+    }
+
+    private void InjectBoss()
+    {
+        GameObject bossObject = GameObject.Find(_bossObjectName);
+
+        if (bossObject == null)
+        {
+            Debug.LogWarning($"Boss object '{_bossObjectName}' was not found on the scene.");
+            return;
+        }
+
+        BossController bossController = bossObject.GetComponent<BossController>();
+        if (bossController == null)
+            bossController = bossObject.AddComponent<BossController>();
+
+        EnemyRoomReference roomReference = bossObject.GetComponent<EnemyRoomReference>();
+        bossController.Construct(_playerController.transform, roomReference != null ? roomReference.RoomBounds : null);
     }
 
     private void EnsureEventSystem()
@@ -143,6 +165,9 @@ public sealed class GameSceneEntryPoint : SceneEntryPointBase
         EnemyAI[] meleeEnemies = Object.FindObjectsOfType<EnemyAI>();
         foreach (EnemyAI enemyAI in meleeEnemies)
         {
+            if (enemyAI.TryGetComponent<BossController>(out _))
+                continue;
+
             EnemyRoomReference roomReference = enemyAI.GetComponent<EnemyRoomReference>();
 
             if (roomReference == null || roomReference.RoomBounds == null)
@@ -158,6 +183,9 @@ public sealed class GameSceneEntryPoint : SceneEntryPointBase
         EnemyRangedAI[] rangedEnemies = Object.FindObjectsOfType<EnemyRangedAI>();
         foreach (EnemyRangedAI enemyAI in rangedEnemies)
         {
+            if (enemyAI.TryGetComponent<BossController>(out _))
+                continue;
+
             EnemyRoomReference roomReference = enemyAI.GetComponent<EnemyRoomReference>();
 
             if (roomReference == null || roomReference.RoomBounds == null)
@@ -172,7 +200,12 @@ public sealed class GameSceneEntryPoint : SceneEntryPointBase
 
         EnemyCombat[] enemiesCombat = Object.FindObjectsOfType<EnemyCombat>();
         foreach (EnemyCombat enemyCombat in enemiesCombat)
+        {
+            if (enemyCombat.TryGetComponent<BossController>(out _))
+                continue;
+
             enemyCombat.Construct(_playerController.transform);
+        }
 
         EnemyRangedCombat[] rangedCombat = Object.FindObjectsOfType<EnemyRangedCombat>();
         foreach (EnemyRangedCombat enemyCombat in rangedCombat)

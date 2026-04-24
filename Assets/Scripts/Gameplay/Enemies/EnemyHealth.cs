@@ -14,6 +14,7 @@ public class EnemyHealth : MonoBehaviour, IDamageable, IHealth
     public bool IsDead => _state != null && _state.IsDead;
 
     public event Action<float> OnHealthChanged;
+    public event Action OnDied;
 
     private Animator _animator;
     private EnemyHealthState _state;
@@ -96,6 +97,7 @@ public class EnemyHealth : MonoBehaviour, IDamageable, IHealth
 
     private void Die()
     {
+        OnDied?.Invoke();
         ApplyDeadPresentation();
         ScheduleDespawn();
     }
@@ -138,6 +140,12 @@ public class EnemyHealth : MonoBehaviour, IDamageable, IHealth
 
         if (TryGetComponent<EnemyRangedCombat>(out var rangedCombat))
             rangedCombat.enabled = enabled;
+
+        if (TryGetComponent<BossController>(out var bossController))
+            bossController.enabled = enabled;
+
+        if (TryGetComponent<BossCombat>(out var bossCombat))
+            bossCombat.enabled = enabled;
 
         if (TryGetComponent<NavMeshAgent>(out var agent))
         {

@@ -8032,6 +8032,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: '::'
   maxHealth: 50
+  _despawnDelay: 3
 --- !u!54 &362279146
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -14590,6 +14591,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyHealth
   maxHealth: 50
+  _despawnDelay: 3
 --- !u!1001 &646596794
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -16535,6 +16537,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyHealth
   maxHealth: 50
+  _despawnDelay: 3
 --- !u!114 &701257675
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -22078,6 +22081,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyHealth
   maxHealth: 50
+  _despawnDelay: 3
 --- !u!1001 &923619053
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -24369,6 +24373,7 @@ MonoBehaviour:
   - {fileID: 4424543518871296406}
   - {fileID: 8327545136382634975}
   _mainMenuSceneName: MainMenu
+  _bossEnemyId: enemy_05
 --- !u!4 &1023380666
 Transform:
   m_ObjectHideFlags: 0
@@ -26200,6 +26205,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyHealth
   maxHealth: 50
+  _despawnDelay: 3
 --- !u!114 &1086674217
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -27031,6 +27037,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyHealth
   maxHealth: 50
+  _despawnDelay: 3
 --- !u!1001 &1087668553
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -32632,6 +32639,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyHealth
   maxHealth: 50
+  _despawnDelay: 3
 --- !u!114 &1268697598
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -33341,6 +33349,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: '::'
   maxHealth: 50
+  _despawnDelay: 3
 --- !u!54 &1303411634
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -38960,6 +38969,63 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 4963b55652180e946b10fda98efef25e, type: 3}
+--- !u!1001 &1556165688
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 8468617057500289297, guid: d66c23583a584ef4195dbea312c0b2a7, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -155.81764
+      objectReference: {fileID: 0}
+    - target: {fileID: 8468617057500289297, guid: d66c23583a584ef4195dbea312c0b2a7, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.2524089
+      objectReference: {fileID: 0}
+    - target: {fileID: 8468617057500289297, guid: d66c23583a584ef4195dbea312c0b2a7, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -17.726488
+      objectReference: {fileID: 0}
+    - target: {fileID: 8468617057500289297, guid: d66c23583a584ef4195dbea312c0b2a7, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8468617057500289297, guid: d66c23583a584ef4195dbea312c0b2a7, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8468617057500289297, guid: d66c23583a584ef4195dbea312c0b2a7, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8468617057500289297, guid: d66c23583a584ef4195dbea312c0b2a7, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8468617057500289297, guid: d66c23583a584ef4195dbea312c0b2a7, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8468617057500289297, guid: d66c23583a584ef4195dbea312c0b2a7, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8468617057500289297, guid: d66c23583a584ef4195dbea312c0b2a7, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9137032837993464747, guid: d66c23583a584ef4195dbea312c0b2a7, type: 3}
+      propertyPath: m_Name
+      value: Boss
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: d66c23583a584ef4195dbea312c0b2a7, type: 3}
 --- !u!1001 &1557678333
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -52332,6 +52398,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: '::'
   maxHealth: 50
+  _despawnDelay: 3
 --- !u!54 &2113802073
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -52881,6 +52948,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: '::'
   maxHealth: 50
+  _despawnDelay: 3
 --- !u!54 &2129373565
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -53957,6 +54025,7 @@ SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
   - {fileID: 1685158905}
+  - {fileID: 1556165688}
   - {fileID: 1303411629}
   - {fileID: 362279140}
   - {fileID: 2113802066}
