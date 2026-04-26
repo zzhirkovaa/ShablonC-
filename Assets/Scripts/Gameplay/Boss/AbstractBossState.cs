@@ -1,15 +1,15 @@
 using UnityEngine;
 
-// Base state for the boss State pattern implementation.
 public abstract class AbstractBossState : IBossState
 {
-    protected AbstractBossState(BossController boss, BossStateMachine stateMachine)
+    protected AbstractBossState(BossContext context, BossStateMachine stateMachine)
     {
-        Boss = boss;
+        Context = context;
         StateMachine = stateMachine;
     }
 
-    protected BossController Boss { get; }
+    protected BossContext Context { get; }
+    protected BossController Boss => Context.Controller;
     protected BossStateMachine StateMachine { get; }
 
     public virtual void Enter()
@@ -20,29 +20,27 @@ public abstract class AbstractBossState : IBossState
     {
     }
 
-    public virtual void LogicUpdate()
+    public virtual void Tick()
     {
     }
 
-    public virtual void PhysicsUpdate()
+    public virtual void FixedTick()
     {
-    }
-
-    protected bool TryEnterRage()
-    {
-        if (!Boss.ShouldEnterRage)
-            return false;
-
-        StateMachine.ChangeState(Boss.RageState, "Boss HP dropped below 50%");
-        return true;
     }
 
     protected bool TryEnterDeath()
     {
-        if (!Boss.IsDead || ReferenceEquals(StateMachine.CurrentState, Boss.DeathState))
+        if (!Context.IsDead)
             return false;
 
         StateMachine.ChangeState(Boss.DeathState, "Boss health depleted");
         return true;
+    }
+
+    protected void FaceTarget(float deltaTime)
+    {
+        Vector3 direction = Context.DirectionToTarget;
+        if (direction != Vector3.zero)
+            Boss.FaceDirection(direction, deltaTime);
     }
 }

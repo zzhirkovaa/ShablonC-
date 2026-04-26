@@ -1,103 +1,109 @@
-using System;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.AI;
 
-// BossController is the context in the State pattern: it stores shared data and delegates behavior to states.
 public sealed class BossController : MonoBehaviour
 {
     [Header("Detection")]
     [SerializeField] private float _detectionRadius = 16f;
-    [SerializeField] private float _attackRange = 3.2f;
-    [SerializeField] private float _strongAttackRange = 4.4f;
+    [SerializeField] private float _loseTargetRadius = 24f;
+    [SerializeField] private float _attackRange = 4f;
+    [SerializeField] private bool _isPeacefulMode;
 
-    [Header("Movement")]
-    [SerializeField] private float _moveSpeed = 3.5f;
-    [SerializeField] private float _rotationSpeed = 10f;
-    [SerializeField] private float _patrolRadius = 5f;
-    [SerializeField] private float _patrolPointTolerance = 0.6f;
+    [Header("Damage")]
+    [SerializeField] private float _attackDamage = 18f;
+    [SerializeField] private float _heavyAttackDamage = 36f;
+    [SerializeField] private DamageType _damageType = DamageType.Physical;
+    [SerializeField] private BossDamageHitbox[] _damageHitboxes;
 
-    [Header("State Timings")]
-    [SerializeField] private float _idleDuration = 1.5f;
-    [SerializeField] private float _aggressionDecisionDelay = 0.2f;
-    [SerializeField] private float _attackStateDuration = 1.15f;
-    [SerializeField] private float _strongAttackStateDuration = 1.4f;
-    [SerializeField] private float _rageStateDuration = 1f;
+    [Header("Cooldowns")]
+    [SerializeField] private float _attackCooldown = 2.4f;
+    [SerializeField] private float _heavyAttackCooldown = 5.5f;
+
+    [Header("Attack Timings")]
+    [SerializeField] private float _attackDuration = 1.15f;
+    [SerializeField] private float _heavyAttackDuration = 1.4f;
+    [SerializeField, Range(0f, 1f)] private float _attackDamageWindowStart = 0.25f;
+    [SerializeField, Range(0f, 1f)] private float _attackDamageWindowEnd = 0.65f;
+    [SerializeField, Range(0f, 1f)] private float _heavyAttackDamageWindowStart = 0.2f;
+    [SerializeField, Range(0f, 1f)] private float _heavyAttackDamageWindowEnd = 0.75f;
 
     [Header("Phase 2")]
     [SerializeField] private float _phaseTwoHealthThreshold = 0.5f;
-    [SerializeField] private float _phaseTwoAttackSpeedMultiplier = 1.4f;
+    [SerializeField] private float _enragedAttackSpeedMultiplier = 1.5f;
 
-    private Animator _animator;
-    private Rigidbody _rigidbody;
-    private EnemyHealth _health;
-    private BossCombat _combat;
-    private Transform _playerTransform;
-    private IEnemyMovementBounds _movementBounds;
-    private Vector3 _spawnPosition;
-    private bool _rageTransitionPending;
+    [Header("References")]
+    [SerializeField] private Transform _target;
+    [SerializeField] private NavMeshAgent _agent;
+    [SerializeField] private Animator _animator;
+    [SerializeField] private EnemyHealth _health;
+
+    [Header("Animator Parameters")]
+    [SerializeField] private string _isMovingParameter = "IsMoving";
+    [SerializeField] private string _attackTriggerParameter = "Attack";
+    [SerializeField] private string _heavyAttackTriggerParameter = "HeavyAttack";
+    [SerializeField] private string _enrageTriggerParameter = "Enrage";
+    [SerializeField] private string _isEnragedParameter = "IsEnraged";
+    [SerializeField] private string _attackSpeedMultiplierParameter = "AttackSpeedMultiplier";
+
+    private readonly HashSet<string> _missingAnimatorParameters = new HashSet<string>();
+    private bool _attackAnimationFinished;
+    private bool _damageWindowOpenedThisAttack;
     private bool _hasEnteredPhaseTwo;
-    private bool _deathHandled;
+    private float _activeAttackDamage;
 
     public BossStateMachine StateMachine { get; private set; }
-    public float MaxHealth => _health != null ? _health.MaxHealth : 0f;
-    public float CurrentHealth => _health != null ? _health.CurrentHealth : 0f;
-    public bool IsDead => _health != null && _health.IsDead;
-    public bool ShouldEnterRage => _rageTransitionPending && !_deathHandled;
-    public float AttackSpeedMultiplier => _hasEnteredPhaseTwo ? _phaseTwoAttackSpeedMultiplier : 1f;
-
-    public float DetectionRadius => _detectionRadius;
-    public float AttackRange => _attackRange;
-    public float StrongAttackRange => _strongAttackRange;
-    public float MoveSpeed => _moveSpeed;
-    public float RotationSpeed => _rotationSpeed;
-    public float PatrolRadius => _patrolRadius;
-    public float PatrolPointTolerance => _patrolPointTolerance;
-    public float IdleDuration => _idleDuration;
-    public float AggressionDecisionDelay => _aggressionDecisionDelay;
-    public float AttackStateDuration => _attackStateDuration / AttackSpeedMultiplier;
-    public float StrongAttackStateDuration => _strongAttackStateDuration / AttackSpeedMultiplier;
-    public float RageStateDuration => _rageStateDuration;
+    public BossContext Context { get; private set; }
 
     public BossIdleState IdleState { get; private set; }
-    public BossPatrolState PatrolState { get; private set; }
-    public BossAggressionState AggressionState { get; private set; }
-    public BossChaseState ChaseState { get; private set; }
+    public BossAggroState AggroState { get; private set; }
     public BossAttackState AttackState { get; private set; }
-    public BossStrongAttackState StrongAttackState { get; private set; }
-    public BossRageState RageState { get; private set; }
+    public BossHeavyAttackState HeavyAttackState { get; private set; }
     public BossDeathState DeathState { get; private set; }
 
-    public bool HasPlayer => _playerTransform != null;
-    public bool HasDetectedPlayer => HasPlayer && DistanceToPlayer <= _detectionRadius;
-    public bool IsPlayerInAttackRange => HasPlayer && DistanceToPlayer <= _attackRange;
-    public bool IsPlayerInStrongAttackRange => HasPlayer && DistanceToPlayer <= _strongAttackRange;
-    public bool CanUseNormalAttack => _combat != null && _combat.CanUseNormalAttack;
-    public bool CanUseStrongAttack => _combat != null && _combat.CanUseStrongAttack;
-
-    public float DistanceToPlayer
-    {
-        get
-        {
-            if (!HasPlayer)
-                return float.PositiveInfinity;
-
-            return Vector3.Distance(transform.position, _playerTransform.position);
-        }
-    }
+    public float DetectionRadius => _detectionRadius;
+    public float LoseTargetRadius => Mathf.Max(_loseTargetRadius, _detectionRadius);
+    public float AttackRange => _attackRange;
+    public float AttackDamage => _attackDamage;
+    public float HeavyAttackDamage => _heavyAttackDamage;
+    public float AttackCooldown => _attackCooldown;
+    public float HeavyAttackCooldown => _heavyAttackCooldown;
+    public float AttackDuration => _attackDuration / CurrentAttackSpeedMultiplier;
+    public float HeavyAttackDuration => _heavyAttackDuration / CurrentAttackSpeedMultiplier;
+    public float AttackDamageWindowStart => _attackDamageWindowStart;
+    public float AttackDamageWindowEnd => Mathf.Max(_attackDamageWindowStart, _attackDamageWindowEnd);
+    public float HeavyAttackDamageWindowStart => _heavyAttackDamageWindowStart;
+    public float HeavyAttackDamageWindowEnd => Mathf.Max(_heavyAttackDamageWindowStart, _heavyAttackDamageWindowEnd);
+    public bool IsPeacefulMode => _isPeacefulMode;
+    public bool IsEnraged => Context != null && Context.IsEnraged;
+    public bool HasDamageWindowOpenedThisAttack => _damageWindowOpenedThisAttack;
+    private float CurrentAttackSpeedMultiplier => Context != null ? Context.AttackSpeedMultiplier : 1f;
 
     private void Awake()
     {
-        _animator = GetComponent<Animator>();
-        _rigidbody = GetComponent<Rigidbody>();
-        _health = GetComponent<EnemyHealth>();
-        _combat = GetComponent<BossCombat>();
-        _spawnPosition = transform.position;
-
-        if (_combat == null)
-            _combat = gameObject.AddComponent<BossCombat>();
-
+        CacheComponents();
         DisableLegacyEnemyLogic();
+
+        Context = new BossContext(this, transform, _agent, _animator, _health);
+        StateMachine = new BossStateMachine(Context, gameObject.name);
+
+        IdleState = new BossIdleState(Context, StateMachine);
+        AggroState = new BossAggroState(Context, StateMachine);
+        AttackState = new BossAttackState(Context, StateMachine);
+        HeavyAttackState = new BossHeavyAttackState(Context, StateMachine);
+        DeathState = new BossDeathState(Context, StateMachine);
+
         SubscribeToHealth();
-        InitializeStateMachine();
+        DisableDamageHitboxes();
+        StateMachine.ChangeState(IdleState, "Initial boss state");
+    }
+
+    private void Start()
+    {
+        if (_target == null)
+            _target = FindPlayer();
+
+        Context.SetTarget(_target);
     }
 
     private void OnDestroy()
@@ -105,81 +111,55 @@ public sealed class BossController : MonoBehaviour
         UnsubscribeFromHealth();
     }
 
-    public void Construct(Transform playerTransform, IEnemyMovementBounds movementBounds)
-    {
-        _playerTransform = playerTransform;
-        _movementBounds = movementBounds;
-        _combat?.Construct(playerTransform);
-    }
-
     private void Update()
     {
-        _combat?.Tick(Time.deltaTime);
-
-        if (_deathHandled || StateMachine?.CurrentState == null)
-            return;
-
-        if (ShouldEnterRage && !ReferenceEquals(StateMachine.CurrentState, RageState))
-        {
-            StateMachine.ChangeState(RageState, "Boss HP dropped below 50%");
-        }
-
-        StateMachine.CurrentState.LogicUpdate();
+        Context.Tick(Time.deltaTime);
+        StateMachine.Tick();
     }
 
     private void FixedUpdate()
     {
-        if (_deathHandled)
+        StateMachine.FixedTick();
+    }
+
+    public void Construct(Transform playerTransform, IEnemyMovementBounds movementBounds)
+    {
+        _target = playerTransform;
+        Context?.SetTarget(playerTransform);
+    }
+
+    public void NotifyHitByPlayer()
+    {
+        if (Context == null || Context.IsDead)
             return;
 
-        StateMachine?.CurrentState?.PhysicsUpdate();
+        StateMachine.ChangeState(AggroState, "Boss was hit by player");
     }
 
-    public void StopMotion()
+    public void MoveToTarget()
     {
-        if (_rigidbody != null)
-            _rigidbody.linearVelocity = Vector3.zero;
+        if (_agent == null || !_agent.enabled || !_agent.isOnNavMesh || !Context.HasTarget)
+            return;
+
+        _agent.isStopped = false;
+        _agent.SetDestination(Context.Target.position);
+        SetAnimatorBool(_isMovingParameter, true);
     }
 
-    public void Move(Vector3 direction, float deltaTime)
+    public void StopMovement()
     {
-        if (direction == Vector3.zero)
+        if (_agent != null && _agent.enabled && _agent.isOnNavMesh)
         {
-            StopMotion();
-            return;
+            _agent.isStopped = true;
+            _agent.ResetPath();
         }
 
-        Vector3 targetPosition = transform.position + direction.normalized * _moveSpeed * deltaTime;
-        targetPosition = ClampPosition(targetPosition);
-
-        if (_rigidbody != null && !_rigidbody.isKinematic)
-            _rigidbody.MovePosition(targetPosition);
-        else
-            transform.position = targetPosition;
+        SetAnimatorBool(_isMovingParameter, false);
     }
 
-    public void MoveTowards(Vector3 targetPosition, float deltaTime)
+    public void FaceTargetImmediately()
     {
-        Vector3 direction = targetPosition - transform.position;
-        direction.y = 0f;
-        Move(direction.normalized, deltaTime);
-    }
-
-    public Vector3 CreatePatrolPoint()
-    {
-        Vector2 circle = UnityEngine.Random.insideUnitCircle * _patrolRadius;
-        Vector3 point = _spawnPosition + new Vector3(circle.x, 0f, circle.y);
-        return ClampPosition(point);
-    }
-
-    public Vector3 GetDirectionToPlayer()
-    {
-        if (!HasPlayer)
-            return Vector3.zero;
-
-        Vector3 direction = _playerTransform.position - transform.position;
-        direction.y = 0f;
-        return direction.normalized;
+        FaceDirection(Context.DirectionToTarget, 1f);
     }
 
     public void FaceDirection(Vector3 direction, float deltaTime)
@@ -188,153 +168,142 @@ public sealed class BossController : MonoBehaviour
             return;
 
         Quaternion targetRotation = Quaternion.LookRotation(direction);
-        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, deltaTime * _rotationSpeed);
+        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Mathf.Max(1f, deltaTime * 12f));
     }
 
-    public void FacePlayerImmediately()
+    public bool TryStartAttack()
     {
-        Vector3 direction = GetDirectionToPlayer();
-        if (direction == Vector3.zero)
+        if (!Context.CanUseAttack)
+            return false;
+
+        _attackAnimationFinished = false;
+        _damageWindowOpenedThisAttack = false;
+        _activeAttackDamage = _attackDamage;
+        Context.TriggerAttackCooldown();
+        DisableDamageHitboxes();
+        SetAnimatorTrigger(_attackTriggerParameter);
+        SetAnimatorFloat(_attackSpeedMultiplierParameter, Context.AttackSpeedMultiplier);
+        return true;
+    }
+
+    public bool TryStartHeavyAttack()
+    {
+        if (!Context.CanUseHeavyAttack)
+            return false;
+
+        _attackAnimationFinished = false;
+        _damageWindowOpenedThisAttack = false;
+        _activeAttackDamage = _heavyAttackDamage;
+        Context.TriggerHeavyAttackCooldown();
+        DisableDamageHitboxes();
+        SetAnimatorTrigger(_heavyAttackTriggerParameter);
+        SetAnimatorFloat(_attackSpeedMultiplierParameter, Context.AttackSpeedMultiplier);
+        return true;
+    }
+
+    public bool ConsumeAttackAnimationFinished()
+    {
+        if (!_attackAnimationFinished)
+            return false;
+
+        _attackAnimationFinished = false;
+        return true;
+    }
+
+    public void EnableDamageHitboxes()
+    {
+        if (_damageHitboxes == null)
             return;
 
-        transform.rotation = Quaternion.LookRotation(direction);
-    }
-
-    public bool HasReachedPoint(Vector3 point)
-    {
-        return Vector3.Distance(transform.position, point) <= _patrolPointTolerance;
-    }
-
-    public void SetMovementAnimation(bool isRunning)
-    {
-        if (HasAnimatorParameter("IsRunning", AnimatorControllerParameterType.Bool))
-            _animator.SetBool("IsRunning", isRunning);
-    }
-
-    public void SetAnimatorSpeed(float speed)
-    {
-        if (_animator != null)
-            _animator.speed = speed;
-    }
-
-    public void BeginAttackAnimation(bool isStrongAttack)
-    {
-        ResetCombatTriggers();
-
-        if (isStrongAttack && HasAnimatorParameter("StrongAttack", AnimatorControllerParameterType.Trigger))
+        _damageWindowOpenedThisAttack = true;
+        foreach (BossDamageHitbox hitbox in _damageHitboxes)
         {
-            _animator.SetTrigger("StrongAttack");
+            if (hitbox == null)
+                continue;
+
+            hitbox.Configure(_activeAttackDamage, _damageType);
+            hitbox.SetActive(true);
         }
-        else if (HasAnimatorParameter("Attack", AnimatorControllerParameterType.Trigger))
-        {
-            _animator.SetTrigger("Attack");
-        }
-
-        SetAnimatorSpeed(AttackSpeedMultiplier);
     }
 
-    public void BeginRageAnimation()
+    public void DisableDamageHitboxes()
     {
-        ResetCombatTriggers();
-        SetAnimatorSpeed(1f);
-
-        if (HasAnimatorParameter("Rage", AnimatorControllerParameterType.Trigger))
-            _animator.SetTrigger("Rage");
-
-        if (HasAnimatorParameter("Rage", AnimatorControllerParameterType.Bool))
-            _animator.SetBool("Rage", true);
-    }
-
-    public void EndRageAnimation()
-    {
-        if (HasAnimatorParameter("Rage", AnimatorControllerParameterType.Bool))
-            _animator.SetBool("Rage", false);
-    }
-
-    public void BeginDeathAnimation()
-    {
-        ResetCombatTriggers();
-        SetAnimatorSpeed(1f);
-        SetMovementAnimation(false);
-
-        if (HasAnimatorParameter("Die", AnimatorControllerParameterType.Trigger))
-            _animator.SetTrigger("Die");
-    }
-
-    public bool TryStartNormalAttack()
-    {
-        return _combat != null && _combat.TryStartNormalAttack();
-    }
-
-    public bool TryStartStrongAttack()
-    {
-        return _combat != null && _combat.TryStartStrongAttack();
-    }
-
-    public void CancelPendingAttack()
-    {
-        _combat?.CancelPendingAttack();
-    }
-
-    public void CompleteRageTransition()
-    {
-        _rageTransitionPending = false;
-    }
-
-    public IBossState SelectPostAttackState()
-    {
-        if (!HasDetectedPlayer)
-            return IdleState;
-
-        if (IsPlayerInAttackRange || IsPlayerInStrongAttackRange)
-            return AggressionState;
-
-        return ChaseState;
-    }
-
-    public IBossState SelectPostRageState()
-    {
-        if (!HasDetectedPlayer)
-            return IdleState;
-
-        if (IsPlayerInAttackRange || IsPlayerInStrongAttackRange)
-            return AggressionState;
-
-        return ChaseState;
-    }
-
-    public void NotifyDeath()
-    {
-        if (_deathHandled)
+        if (_damageHitboxes == null)
             return;
 
-        _deathHandled = true;
-        StateMachine?.ChangeState(DeathState, "Boss health depleted");
+        foreach (BossDamageHitbox hitbox in _damageHitboxes)
+        {
+            if (hitbox != null)
+                hitbox.SetActive(false);
+        }
     }
 
-    private void InitializeStateMachine()
+    public void OnAttackAnimationFinished()
     {
-        StateMachine = new BossStateMachine(gameObject.name);
-
-        IdleState = new BossIdleState(this, StateMachine);
-        PatrolState = new BossPatrolState(this, StateMachine);
-        AggressionState = new BossAggressionState(this, StateMachine);
-        ChaseState = new BossChaseState(this, StateMachine);
-        AttackState = new BossAttackState(this, StateMachine);
-        StrongAttackState = new BossStrongAttackState(this, StateMachine);
-        RageState = new BossRageState(this, StateMachine);
-        DeathState = new BossDeathState(this, StateMachine);
-
-        StateMachine.ChangeState(IdleState, "Initial boss state");
+        _attackAnimationFinished = true;
     }
 
-    private void DisableLegacyEnemyLogic()
+    public void EnterPhaseTwo()
     {
-        if (TryGetComponent<EnemyAI>(out var enemyAI))
-            enemyAI.enabled = false;
+        if (_hasEnteredPhaseTwo || Context == null || Context.IsDead)
+            return;
 
-        if (TryGetComponent<EnemyCombat>(out var enemyCombat))
-            enemyCombat.enabled = false;
+        _hasEnteredPhaseTwo = true;
+        Context.EnterEnrage(_enragedAttackSpeedMultiplier);
+        SetAnimatorBool(_isEnragedParameter, true);
+        SetAnimatorFloat(_attackSpeedMultiplierParameter, Context.AttackSpeedMultiplier);
+        SetAnimatorTrigger(_enrageTriggerParameter);
+
+        Debug.Log($"[{gameObject.name}] Boss entered phase 2. Attack speed multiplier: {_enragedAttackSpeedMultiplier}");
+    }
+
+    private void CacheComponents()
+    {
+        if (_agent == null)
+            _agent = GetComponent<NavMeshAgent>();
+
+        if (_animator == null)
+            _animator = GetComponent<Animator>();
+
+        if (_health == null)
+            _health = GetComponent<EnemyHealth>();
+
+        if (_damageHitboxes == null || _damageHitboxes.Length == 0)
+            _damageHitboxes = GetComponentsInChildren<BossDamageHitbox>(true);
+
+        if (_agent == null)
+            Debug.LogWarning($"[{name}] BossController requires a NavMeshAgent for Aggro movement.");
+
+        if (_animator == null)
+            Debug.LogWarning($"[{name}] BossController has no Animator. Animation parameters will be skipped.");
+
+        if (_health == null)
+            Debug.LogWarning($"[{name}] BossController has no EnemyHealth. Phase 2 and death detection will be limited.");
+    }
+
+    private Transform FindPlayer()
+    {
+        GameObject player = FindWithTagIfExists("player");
+        if (player == null)
+            player = FindWithTagIfExists("Player");
+
+        if (player != null)
+            return player.transform;
+
+        PlayerController playerController = Object.FindFirstObjectByType<PlayerController>();
+        return playerController != null ? playerController.transform : null;
+    }
+
+    private GameObject FindWithTagIfExists(string tagName)
+    {
+        try
+        {
+            return GameObject.FindGameObjectWithTag(tagName);
+        }
+        catch (UnityException)
+        {
+            return null;
+        }
     }
 
     private void SubscribeToHealth()
@@ -343,7 +312,7 @@ public sealed class BossController : MonoBehaviour
             return;
 
         _health.OnHealthChanged += HandleHealthChanged;
-        _health.OnDied += NotifyDeath;
+        _health.OnDied += HandleDied;
     }
 
     private void UnsubscribeFromHealth()
@@ -352,43 +321,61 @@ public sealed class BossController : MonoBehaviour
             return;
 
         _health.OnHealthChanged -= HandleHealthChanged;
-        _health.OnDied -= NotifyDeath;
+        _health.OnDied -= HandleDied;
     }
 
     private void HandleHealthChanged(float healthRatio)
     {
-        if (_hasEnteredPhaseTwo || _health == null || _health.IsDead)
-            return;
-
-        if (healthRatio > _phaseTwoHealthThreshold)
-            return;
-
-        _hasEnteredPhaseTwo = true;
-        _rageTransitionPending = true;
-        _combat?.SetAttackSpeedMultiplier(_phaseTwoAttackSpeedMultiplier);
-        Debug.Log($"[{gameObject.name}] Boss entered phase 2. Attack speed multiplier: {_phaseTwoAttackSpeedMultiplier}");
+        if (!_hasEnteredPhaseTwo && healthRatio <= _phaseTwoHealthThreshold)
+            EnterPhaseTwo();
     }
 
-    private Vector3 ClampPosition(Vector3 position)
+    private void HandleDied()
     {
-        return _movementBounds != null ? _movementBounds.ClampPosition(position) : position;
+        DisableDamageHitboxes();
+        StopMovement();
+        StateMachine.ChangeState(DeathState, "Boss health depleted");
     }
 
-    private void ResetCombatTriggers()
+    private void DisableLegacyEnemyLogic()
     {
-        if (_animator == null)
-            return;
+        if (TryGetComponent<EnemyAI>(out var enemyAI))
+            enemyAI.enabled = false;
 
-        if (HasAnimatorParameter("Attack", AnimatorControllerParameterType.Trigger))
-            _animator.ResetTrigger("Attack");
+        if (TryGetComponent<EnemyRangedAI>(out var rangedAI))
+            rangedAI.enabled = false;
 
-        if (HasAnimatorParameter("StrongAttack", AnimatorControllerParameterType.Trigger))
-            _animator.ResetTrigger("StrongAttack");
+        if (TryGetComponent<EnemyCombat>(out var enemyCombat))
+            enemyCombat.enabled = false;
+
+        if (TryGetComponent<EnemyRangedCombat>(out var rangedCombat))
+            rangedCombat.enabled = false;
+
+        if (TryGetComponent<BossCombat>(out var legacyBossCombat))
+            legacyBossCombat.enabled = false;
+    }
+
+    private void SetAnimatorBool(string parameterName, bool value)
+    {
+        if (HasAnimatorParameter(parameterName, AnimatorControllerParameterType.Bool))
+            _animator.SetBool(parameterName, value);
+    }
+
+    private void SetAnimatorFloat(string parameterName, float value)
+    {
+        if (HasAnimatorParameter(parameterName, AnimatorControllerParameterType.Float))
+            _animator.SetFloat(parameterName, value);
+    }
+
+    private void SetAnimatorTrigger(string parameterName)
+    {
+        if (HasAnimatorParameter(parameterName, AnimatorControllerParameterType.Trigger))
+            _animator.SetTrigger(parameterName);
     }
 
     private bool HasAnimatorParameter(string parameterName, AnimatorControllerParameterType parameterType)
     {
-        if (_animator == null)
+        if (_animator == null || string.IsNullOrWhiteSpace(parameterName))
             return false;
 
         foreach (AnimatorControllerParameter parameter in _animator.parameters)
@@ -397,6 +384,22 @@ public sealed class BossController : MonoBehaviour
                 return true;
         }
 
+        string key = $"{parameterType}:{parameterName}";
+        if (_missingAnimatorParameters.Add(key))
+            Debug.LogWarning($"[{name}] Animator parameter '{parameterName}' ({parameterType}) was not found.");
+
         return false;
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireSphere(transform.position, _detectionRadius);
+
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(transform.position, _attackRange);
+
+        Gizmos.color = Color.cyan;
+        Gizmos.DrawWireSphere(transform.position, LoseTargetRadius);
     }
 }

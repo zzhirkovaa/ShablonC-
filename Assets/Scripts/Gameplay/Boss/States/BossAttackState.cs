@@ -2,49 +2,67 @@ using UnityEngine;
 
 public sealed class BossAttackState : AbstractBossState
 {
-    private float _attackTimer;
+    private float _elapsed;
+    private bool _hitboxesEnabledByFallback;
+    private bool _damageWindowOpened;
 
-    public BossAttackState(BossController boss, BossStateMachine stateMachine) : base(boss, stateMachine)
+    public BossAttackState(BossContext context, BossStateMachine stateMachine) : base(context, stateMachine)
     {
     }
 
     public override void Enter()
     {
-        Boss.StopMotion();
-        Boss.SetMovementAnimation(false);
-        Boss.FacePlayerImmediately();
+        Boss.StopMovement();
+        Boss.FaceTargetImmediately();
 
-        if (!Boss.TryStartNormalAttack())
+        if (!Boss.TryStartAttack())
         {
-            StateMachine.ChangeState(Boss.AggressionState, "Normal attack was still on cooldown");
+            StateMachine.ChangeState(Boss.AggroState, "Normal attack was on cooldown");
             return;
         }
 
-        _attackTimer = Boss.AttackStateDuration;
-        Boss.BeginAttackAnimation(false);
+        _elapsed = 0f;
+        _hitboxesEnabledByFallback = false;
+        _damageWindowOpened = false;
     }
 
     public override void Exit()
     {
-        Boss.SetAnimatorSpeed(1f);
-        Boss.CancelPendingAttack();
+        Boss.DisableDamageHitboxes();
     }
 
-    public override void LogicUpdate()
+    public override void Tick()
     {
-        if (TryEnterDeath() || TryEnterRage())
+        if (TryEnterDeath())
             return;
 
-        _attackTimer -= Time.deltaTime;
-        if (_attackTimer > 0f)
-            return;
+        _elapsed += Time.deltaTime;
+        TickDamageWindow(Boss.AttackDuration, Boss.AttackDamageWindowStart, Boss.AttackDamageWindowEnd);
 
-        StateMachine.ChangeState(Boss.SelectPostAttackState(), "Boss finished normal attack");
+        if (Boss.ConsumeAttackAnimationFinished() || _elapsed >= Boss.AttackDuration)
+            StateMachine.ChangeState(Boss.AggroState, "Boss finished normal attack");
     }
 
-    public override void PhysicsUpdate()
+    public override void FixedTick()
     {
-        Boss.StopMotion();
-        Boss.FaceDirection(Boss.GetDirectionToPlayer(), Time.fixedDeltaTime);
+        FaceTarget(Time.fixedDeltaTime);
+    }
+
+    private void TickDamageWindow(float duration, float startNormalized, float endNormalized)
+    {
+        float normalizedTime = duration > 0f ? _elapsed / duration : 1f;
+
+        if (!_damageWindowOpened && !Boss.HasDamageWindowOpenedThisAttack && normalizedTime >= startNormalized)
+        {
+            Boss.EnableDamageHitboxes();
+            _hitboxesEnabledByFallback = true;
+            _damageWindowOpened = true;
+        }
+
+        if (_hitboxesEnabledByFallback && normalizedTime >= endNormalized)
+        {
+            Boss.DisableDamageHitboxes();
+            _hitboxesEnabledByFallback = false;
+        }
     }
 }

@@ -4,14 +4,15 @@ public sealed class BossStateMachine
 {
     private readonly string _ownerName;
 
-    public BossStateMachine(string ownerName)
+    public BossStateMachine(BossContext context, string ownerName)
     {
+        Context = context;
         _ownerName = ownerName;
     }
 
+    public BossContext Context { get; }
     public IBossState CurrentState { get; private set; }
 
-    // State machine entry point for every boss transition.
     public void ChangeState(IBossState nextState, string reason = "No reason provided")
     {
         if (nextState == null || ReferenceEquals(CurrentState, nextState))
@@ -24,5 +25,15 @@ public sealed class BossStateMachine
         CurrentState?.Exit();
         CurrentState = nextState;
         CurrentState.Enter();
+    }
+
+    public void Tick()
+    {
+        CurrentState?.Tick();
+    }
+
+    public void FixedTick()
+    {
+        CurrentState?.FixedTick();
     }
 }

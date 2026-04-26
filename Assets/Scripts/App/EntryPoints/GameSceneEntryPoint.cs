@@ -104,18 +104,23 @@ public sealed class GameSceneEntryPoint : SceneEntryPointBase
     private void InjectBoss()
     {
         GameObject bossObject = GameObject.Find(_bossObjectName);
+        BossController bossController = null;
 
-        if (bossObject == null)
+        if (bossObject != null)
+            bossController = bossObject.GetComponent<BossController>();
+        else
+            bossController = Object.FindFirstObjectByType<BossController>();
+
+        if (bossController == null && bossObject == null)
         {
-            Debug.LogWarning($"Boss object '{_bossObjectName}' was not found on the scene.");
+            Debug.LogWarning($"Boss object '{_bossObjectName}' or any BossController was not found on the scene.");
             return;
         }
 
-        BossController bossController = bossObject.GetComponent<BossController>();
         if (bossController == null)
             bossController = bossObject.AddComponent<BossController>();
 
-        EnemyRoomReference roomReference = bossObject.GetComponent<EnemyRoomReference>();
+        EnemyRoomReference roomReference = bossController.GetComponent<EnemyRoomReference>();
         bossController.Construct(_playerController.transform, roomReference != null ? roomReference.RoomBounds : null);
     }
 

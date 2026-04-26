@@ -2,6 +2,6 @@ public interface IBossState
 {
     void Enter();
     void Exit();
-    void LogicUpdate();
-    void PhysicsUpdate();
+    void Tick();
+    void FixedTick();
 }
