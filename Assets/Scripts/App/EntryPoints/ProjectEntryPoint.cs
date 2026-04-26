@@ -16,7 +16,8 @@ public sealed class ProjectEntryPoint : MonoBehaviour
             new AudioService(),
             new SaveService(),
             new SceneLoader(),
-            new PendingLoadDataService());
+            new PendingLoadDataService(),
+            new GameModeService());
 
         _appServices.AudioService.LoadVolume();
 

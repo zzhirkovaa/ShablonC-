@@ -89,7 +89,7 @@ public sealed class BossCombat : MonoBehaviour
         if (Vector3.Distance(transform.position, _player.position) <= maxDistance &&
             _player.TryGetComponent<IDamageable>(out var victim))
         {
-            victim.TakeDamage(new DamageInfo(damageAmount, DamageType.Physical));
+            victim.TakeDamage(new DamageInfo(damageAmount, DamageType.Physical, gameObject));
         }
 
         _pendingAttack = PendingAttackKind.None;

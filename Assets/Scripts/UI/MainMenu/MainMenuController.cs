@@ -8,6 +8,7 @@ namespace Ui.MainMenu
         private readonly MainMenuView _mainMenuView;
         private readonly SettingsMenuView _settingsView;
         private readonly ISceneLoader _sceneLoader;
+        private readonly IGameModeService _gameModeService;
         private readonly string _gameSceneName;
 
         public MainMenuController(
@@ -15,15 +16,18 @@ namespace Ui.MainMenu
             MainMenuView mainMenuView,
             SettingsMenuView settingsView,
             ISceneLoader sceneLoader,
+            IGameModeService gameModeService,
             string gameSceneName)
         {
             _model = model;
             _mainMenuView = mainMenuView;
             _settingsView = settingsView;
             _sceneLoader = sceneLoader;
+            _gameModeService = gameModeService;
             _gameSceneName = gameSceneName;
 
             _mainMenuView.PlayClicked += OnPlayClicked;
+            _mainMenuView.PlayPeaceModeClicked += OnPlayPeaceModeClicked;
             _mainMenuView.SettingsClicked += OnSettingsClicked;
             _mainMenuView.ExitClicked += OnExitClicked;
             _settingsView.BackClicked += OnBackClicked;
@@ -34,6 +38,7 @@ namespace Ui.MainMenu
         public void Dispose()
         {
             _mainMenuView.PlayClicked -= OnPlayClicked;
+            _mainMenuView.PlayPeaceModeClicked -= OnPlayPeaceModeClicked;
             _mainMenuView.SettingsClicked -= OnSettingsClicked;
             _mainMenuView.ExitClicked -= OnExitClicked;
             _settingsView.BackClicked -= OnBackClicked;
@@ -41,6 +46,13 @@ namespace Ui.MainMenu
 
         private void OnPlayClicked()
         {
+            _gameModeService.SetMode(GameMode.Normal);
+            _sceneLoader.Load(_gameSceneName);
+        }
+
+        private void OnPlayPeaceModeClicked()
+        {
+            _gameModeService.SetMode(GameMode.Peaceful);
             _sceneLoader.Load(_gameSceneName);
         }
 

@@ -22,6 +22,8 @@ public sealed class BossContext
     public bool HasTarget => Target != null;
     public bool IsDead => Health != null && Health.IsDead;
     public bool IsEnraged { get; private set; }
+    public bool IsPeacefulMode { get; private set; }
+    public bool WasProvokedByPlayer { get; private set; }
     public float AttackSpeedMultiplier { get; private set; } = 1f;
 
     public float AttackCooldownRemaining { get; private set; }
@@ -60,6 +62,16 @@ public sealed class BossContext
     public void SetTarget(Transform target)
     {
         Target = target;
+    }
+
+    public void SetPeacefulMode(bool isPeacefulMode)
+    {
+        IsPeacefulMode = isPeacefulMode;
+    }
+
+    public void MarkProvokedByPlayer()
+    {
+        WasProvokedByPlayer = true;
     }
 
     public void Tick(float deltaTime)

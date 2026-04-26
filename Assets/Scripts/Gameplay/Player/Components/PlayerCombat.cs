@@ -12,7 +12,7 @@ public class PlayerCombat : MonoBehaviour
 
     private void Awake()
     {
-        _combatLogic = new PlayerCombatLogic(attackDamage, attackRange, enemyLayers);
+        _combatLogic = new PlayerCombatLogic(attackDamage, attackRange, enemyLayers, gameObject);
     }
 
     public void Hit()

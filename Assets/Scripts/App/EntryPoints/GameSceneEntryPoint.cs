@@ -30,9 +30,11 @@ public sealed class GameSceneEntryPoint : SceneEntryPointBase
     private Ui.PauseMenu.PauseMenuController _pauseMenuController;
     private HealthBarUiController _healthBarController;
     private DeathScreenUiController _deathScreenController;
+    private IGameModeService _gameModeService;
 
     public override void Initialize(AppServices appServices)
     {
+        _gameModeService = appServices.GameModeService;
         ComposePlayer();
         EnsureEventSystem();
 
@@ -121,6 +123,7 @@ public sealed class GameSceneEntryPoint : SceneEntryPointBase
             bossController = bossObject.AddComponent<BossController>();
 
         EnemyRoomReference roomReference = bossController.GetComponent<EnemyRoomReference>();
+        bossController.SetPeacefulMode(_gameModeService.IsPeacefulMode);
         bossController.Construct(_playerController.transform, roomReference != null ? roomReference.RoomBounds : null);
     }
 
@@ -178,10 +181,12 @@ public sealed class GameSceneEntryPoint : SceneEntryPointBase
             if (roomReference == null || roomReference.RoomBounds == null)
             {
                 Debug.LogWarning($"Enemy {enemyAI.name} has no EnemyRoomReference or RoomBounds assigned.");
+                enemyAI.SetPeacefulMode(_gameModeService.IsPeacefulMode);
                 enemyAI.Construct(_playerController.transform, null);
                 continue;
             }
 
+            enemyAI.SetPeacefulMode(_gameModeService.IsPeacefulMode);
             enemyAI.Construct(_playerController.transform, roomReference.RoomBounds);
         }
 
@@ -196,10 +201,12 @@ public sealed class GameSceneEntryPoint : SceneEntryPointBase
             if (roomReference == null || roomReference.RoomBounds == null)
             {
                 Debug.LogWarning($"Ranged enemy {enemyAI.name} has no EnemyRoomReference or RoomBounds assigned.");
+                enemyAI.SetPeacefulMode(_gameModeService.IsPeacefulMode);
                 enemyAI.Construct(_playerController.transform, null);
                 continue;
             }
 
+            enemyAI.SetPeacefulMode(_gameModeService.IsPeacefulMode);
             enemyAI.Construct(_playerController.transform, roomReference.RoomBounds);
         }
 

@@ -11,14 +11,30 @@ public abstract class EnemyAttackStateBase : EnemyStateBase
     {
         Context.SetAnimatorBool("IsRunning", false);
         Context.SetAnimatorBool("IsFleeing", false);
+
+        if (Context.IsPeacefulMode)
+            return;
+
         TryStartAttack();
     }
 
-    public override void LogicUpdate()
+    public override void Tick()
     {
         if (!Context.HasPlayer)
         {
             StateMachine.ChangeState(Context.IdleState, "Lost player reference during attack");
+            return;
+        }
+
+        if (Context.IsPeacefulMode)
+        {
+            if (Context.ShouldEnterFlee)
+            {
+                StateMachine.ChangeState(Context.FleeState, Context.GetFleeReasonLabel());
+                return;
+            }
+
+            StateMachine.ChangeState(Context.IdleState, "Peaceful mode suppresses attack");
             return;
         }
 
@@ -39,13 +55,16 @@ public abstract class EnemyAttackStateBase : EnemyStateBase
         TryStartAttack();
     }
 
-    public override void PhysicsUpdate()
+    public override void FixedTick()
     {
         Context.StopMotion();
     }
 
     protected void TryStartAttack()
     {
+        if (Context.IsPeacefulMode)
+            return;
+
         if (Context.IsAnimatorStatePlaying("Attack"))
             return;
 

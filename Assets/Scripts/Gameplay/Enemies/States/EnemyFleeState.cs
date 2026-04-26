@@ -24,7 +24,7 @@ public sealed class EnemyFleeState : EnemyStateBase
         Context.ClearFleeRequest();
     }
 
-    public override void LogicUpdate()
+    public override void Tick()
     {
         if (!Context.HasPlayer)
         {
@@ -37,11 +37,14 @@ public sealed class EnemyFleeState : EnemyStateBase
         bool fleeTimeExpired = _fleeTimer <= 0f;
         bool reachedSafety = Context.HasReachedFleeSafety;
 
+        if (Context.IsPeacefulMode && (Context.ShouldFleeInPeacefulMode || !reachedSafety))
+            return;
+
         if (reachedSafety || fleeTimeExpired)
             StateMachine.ChangeState(GetNextStateAfterFlee(), GetExitReason(fleeTimeExpired, reachedSafety));
     }
 
-    public override void PhysicsUpdate()
+    public override void FixedTick()
     {
         Vector3 direction = Context.GetDirectionAwayFromPlayer();
         Context.Move(direction, Time.fixedDeltaTime);
@@ -50,6 +53,9 @@ public sealed class EnemyFleeState : EnemyStateBase
 
     private IEnemyState GetNextStateAfterFlee()
     {
+        if (Context.IsPeacefulMode)
+            return Context.IdleState;
+
         if (!Context.HasDetectedPlayer)
             return Context.IdleState;
 

@@ -35,7 +35,7 @@ public class Projectile : MonoBehaviour
 
         if (other.TryGetComponent<IDamageable>(out var victim))
         {
-            DamageInfo info = new DamageInfo(damageAmount, DamageType.Magical);
+            DamageInfo info = new DamageInfo(damageAmount, DamageType.Magical, owner);
             victim.TakeDamage(info);
             Destroy(gameObject);
             return;

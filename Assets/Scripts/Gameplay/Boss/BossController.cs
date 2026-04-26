@@ -74,7 +74,7 @@ public sealed class BossController : MonoBehaviour
     public float AttackDamageWindowEnd => Mathf.Max(_attackDamageWindowStart, _attackDamageWindowEnd);
     public float HeavyAttackDamageWindowStart => _heavyAttackDamageWindowStart;
     public float HeavyAttackDamageWindowEnd => Mathf.Max(_heavyAttackDamageWindowStart, _heavyAttackDamageWindowEnd);
-    public bool IsPeacefulMode => _isPeacefulMode;
+    public bool IsPeacefulMode => Context != null ? Context.IsPeacefulMode : _isPeacefulMode;
     public bool IsEnraged => Context != null && Context.IsEnraged;
     public bool HasDamageWindowOpenedThisAttack => _damageWindowOpenedThisAttack;
     private float CurrentAttackSpeedMultiplier => Context != null ? Context.AttackSpeedMultiplier : 1f;
@@ -85,6 +85,7 @@ public sealed class BossController : MonoBehaviour
         DisableLegacyEnemyLogic();
 
         Context = new BossContext(this, transform, _agent, _animator, _health);
+        Context.SetPeacefulMode(_isPeacefulMode);
         StateMachine = new BossStateMachine(Context, gameObject.name);
 
         IdleState = new BossIdleState(Context, StateMachine);
@@ -128,11 +129,18 @@ public sealed class BossController : MonoBehaviour
         Context?.SetTarget(playerTransform);
     }
 
+    public void SetPeacefulMode(bool isPeacefulMode)
+    {
+        _isPeacefulMode = isPeacefulMode;
+        Context?.SetPeacefulMode(isPeacefulMode);
+    }
+
     public void NotifyHitByPlayer()
     {
         if (Context == null || Context.IsDead)
             return;
 
+        Context.MarkProvokedByPlayer();
         StateMachine.ChangeState(AggroState, "Boss was hit by player");
     }
 
@@ -312,6 +320,7 @@ public sealed class BossController : MonoBehaviour
             return;
 
         _health.OnHealthChanged += HandleHealthChanged;
+        _health.OnDamaged += HandleDamaged;
         _health.OnDied += HandleDied;
     }
 
@@ -321,7 +330,14 @@ public sealed class BossController : MonoBehaviour
             return;
 
         _health.OnHealthChanged -= HandleHealthChanged;
+        _health.OnDamaged -= HandleDamaged;
         _health.OnDied -= HandleDied;
+    }
+
+    private void HandleDamaged(DamageInfo damage)
+    {
+        if (IsDamageFromPlayer(damage))
+            NotifyHitByPlayer();
     }
 
     private void HandleHealthChanged(float healthRatio)
@@ -335,6 +351,29 @@ public sealed class BossController : MonoBehaviour
         DisableDamageHitboxes();
         StopMovement();
         StateMachine.ChangeState(DeathState, "Boss health depleted");
+    }
+
+    private bool IsDamageFromPlayer(DamageInfo damage)
+    {
+        if (damage.Source == null)
+            return false;
+
+        if (HasTag(damage.Source, "player") || HasTag(damage.Source, "Player"))
+            return true;
+
+        return damage.Source.GetComponentInParent<PlayerController>() != null;
+    }
+
+    private bool HasTag(GameObject source, string tagName)
+    {
+        try
+        {
+            return source.CompareTag(tagName);
+        }
+        catch (UnityException)
+        {
+            return false;
+        }
     }
 
     private void DisableLegacyEnemyLogic()

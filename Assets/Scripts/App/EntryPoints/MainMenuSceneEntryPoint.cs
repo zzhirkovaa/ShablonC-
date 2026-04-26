@@ -31,6 +31,7 @@ public sealed class MainMenuSceneEntryPoint : SceneEntryPointBase
             _mainMenuView,
             _settingsMenuView,
             appServices.SceneLoader,
+            appServices.GameModeService,
             _gameSceneName);
     }
 

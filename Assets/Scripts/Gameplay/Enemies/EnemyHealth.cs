@@ -14,6 +14,7 @@ public class EnemyHealth : MonoBehaviour, IDamageable, IHealth
     public bool IsDead => _state != null && _state.IsDead;
 
     public event Action<float> OnHealthChanged;
+    public event Action<DamageInfo> OnDamaged;
     public event Action OnDied;
 
     private Animator _animator;
@@ -53,9 +54,16 @@ public class EnemyHealth : MonoBehaviour, IDamageable, IHealth
         if (!_state.ApplyDamage(damage.Amount))
             return;
 
+        OnDamaged?.Invoke(damage);
+
         if (_fleeContext != null)
         {
-            if (damage.Type == DamageType.Physical && _fleeContext.FleeOnMeleeHit)
+            if (_fleeContext.IsPeacefulMode)
+            {
+                if (_fleeContext.ShouldFleeInPeacefulMode)
+                    _fleeContext.RequestFlee(EnemyFleeReason.LowHealth);
+            }
+            else if (damage.Type == DamageType.Physical && _fleeContext.FleeOnMeleeHit)
             {
                 _fleeContext.RequestFlee(EnemyFleeReason.MeleeHit, wasMeleeHit: true);
             }

@@ -14,5 +14,8 @@ public sealed class RangedProjectileAttackLogic
         Vector3 aimPoint = targetTransform.position + Vector3.up * 0.8f;
         Vector3 direction = (aimPoint - firePoint.position).normalized;
         projectile.transform.forward = direction;
+
+        if (projectile.TryGetComponent<Projectile>(out var projectileComponent))
+            projectileComponent.owner = originTransform.gameObject;
     }
 }

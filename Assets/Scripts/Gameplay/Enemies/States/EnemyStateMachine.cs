@@ -4,11 +4,13 @@ public sealed class EnemyStateMachine
 {
     private readonly string _ownerName;
 
-    public EnemyStateMachine(string ownerName)
+    public EnemyStateMachine(EnemyContext context, string ownerName)
     {
+        Context = context;
         _ownerName = ownerName;
     }
 
+    public EnemyContext Context { get; }
     public IEnemyState CurrentState { get; private set; }
 
     public void ChangeState(IEnemyState nextState, string reason = "No reason provided")
@@ -24,5 +26,15 @@ public sealed class EnemyStateMachine
         CurrentState?.Exit();
         CurrentState = nextState;
         CurrentState.Enter();
+    }
+
+    public void Tick()
+    {
+        CurrentState?.Tick();
+    }
+
+    public void FixedTick()
+    {
+        CurrentState?.FixedTick();
     }
 }

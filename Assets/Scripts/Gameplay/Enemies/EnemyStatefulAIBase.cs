@@ -48,7 +48,7 @@ public abstract class EnemyStatefulAIBase : MonoBehaviour
         if (_health != null)
             _health.SetFleeContext(Context);
 
-        StateMachine = new EnemyStateMachine(gameObject.name);
+        StateMachine = new EnemyStateMachine(Context, gameObject.name);
 
         Context.IdleState = new EnemyIdleState(Context, StateMachine);
         Context.AggressionState = new EnemyAggressionState(Context, StateMachine);
@@ -63,15 +63,20 @@ public abstract class EnemyStatefulAIBase : MonoBehaviour
         Context?.UpdateBindings(playerTransform, movementBounds);
     }
 
+    public void SetPeacefulMode(bool isPeacefulMode)
+    {
+        Context?.SetPeacefulMode(isPeacefulMode);
+    }
+
     protected virtual void Update()
     {
         Context?.Tick(Time.deltaTime);
-        StateMachine?.CurrentState?.LogicUpdate();
+        StateMachine?.Tick();
     }
 
     protected virtual void FixedUpdate()
     {
-        StateMachine?.CurrentState?.PhysicsUpdate();
+        StateMachine?.FixedTick();
     }
 
     protected abstract IEnemyState CreateAttackState(EnemyContext context, EnemyStateMachine stateMachine);

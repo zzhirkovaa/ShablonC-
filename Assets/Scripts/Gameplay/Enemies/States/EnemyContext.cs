@@ -2,6 +2,8 @@ using UnityEngine;
 
 public sealed class EnemyContext
 {
+    private const float PeacefulFleeHealthThreshold = 0.5f;
+
     public EnemyContext(
         Transform transform,
         Rigidbody rigidbody,
@@ -60,6 +62,7 @@ public sealed class EnemyContext
     public bool WasMeleeHit { get; private set; }
     public bool FleeRequested { get; private set; }
     public bool IsFleeing { get; private set; }
+    public bool IsPeacefulMode { get; private set; }
     public bool PanicRequested { get; private set; }
     public EnemyFleeReason FleeReason { get; private set; }
 
@@ -111,6 +114,17 @@ public sealed class EnemyContext
         }
     }
 
+    public bool ShouldFleeInPeacefulMode
+    {
+        get
+        {
+            if (Health == null || Health.MaxHealth <= 0f || Health.IsDead)
+                return false;
+
+            return Health.CurrentHealth / Health.MaxHealth <= PeacefulFleeHealthThreshold;
+        }
+    }
+
     public bool ShouldEnterFlee
     {
         get
@@ -120,6 +134,9 @@ public sealed class EnemyContext
 
             if (FleeRequested || PanicRequested)
                 return true;
+
+            if (IsPeacefulMode)
+                return ShouldFleeInPeacefulMode;
 
             return FleeOnLowHealth && IsHealthCritical;
         }
@@ -133,6 +150,11 @@ public sealed class EnemyContext
         FleeRequested = true;
         WasMeleeHit = wasMeleeHit;
         FleeReason = reason;
+    }
+
+    public void SetPeacefulMode(bool isPeacefulMode)
+    {
+        IsPeacefulMode = isPeacefulMode;
     }
 
     public void RequestPanic()

@@ -8408,9 +8408,17 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 630977453442744802, guid: 8c8de6d8781184403bf6a68945e00e47, type: 3}
+      propertyPath: _enragedAttackSpeedMultiplier
+      value: 3
+      objectReference: {fileID: 0}
     - target: {fileID: 1394148606928736200, guid: 8c8de6d8781184403bf6a68945e00e47, type: 3}
       propertyPath: m_Name
       value: Boss 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5273989120231893344, guid: 8c8de6d8781184403bf6a68945e00e47, type: 3}
+      propertyPath: maxHealth
+      value: 200
       objectReference: {fileID: 0}
     - target: {fileID: 6199389837068164624, guid: 8c8de6d8781184403bf6a68945e00e47, type: 3}
       propertyPath: m_LocalPosition.x

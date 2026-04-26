@@ -14,11 +14,23 @@ public sealed class EnemyAggressionState : EnemyStateBase
         Context.ResetAnimatorTrigger("Attack");
     }
 
-    public override void LogicUpdate()
+    public override void Tick()
     {
         if (!Context.HasPlayer)
         {
             StateMachine.ChangeState(Context.IdleState, "Lost player reference during aggression");
+            return;
+        }
+
+        if (Context.IsPeacefulMode)
+        {
+            if (Context.ShouldEnterFlee)
+            {
+                StateMachine.ChangeState(Context.FleeState, Context.GetFleeReasonLabel());
+                return;
+            }
+
+            StateMachine.ChangeState(Context.IdleState, "Peaceful mode suppresses aggression");
             return;
         }
 
@@ -38,7 +50,7 @@ public sealed class EnemyAggressionState : EnemyStateBase
             StateMachine.ChangeState(Context.IdleState, "Player no longer detected during aggression");
     }
 
-    public override void PhysicsUpdate()
+    public override void FixedTick()
     {
         Vector3 direction = Context.GetDirectionToPlayer();
         Context.Move(direction, Time.fixedDeltaTime);

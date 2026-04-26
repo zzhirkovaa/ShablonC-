@@ -45,7 +45,9 @@ public class PlayerRangedCombat : MonoBehaviour
     {
         if (_projectilePrefab != null && _firePoint != null)
         {
-            Instantiate(_projectilePrefab, _firePoint.position, _firePoint.rotation);
+            GameObject projectileObject = Instantiate(_projectilePrefab, _firePoint.position, _firePoint.rotation);
+            if (projectileObject.TryGetComponent<Projectile>(out var projectile))
+                projectile.owner = gameObject;
         }
     }
 }

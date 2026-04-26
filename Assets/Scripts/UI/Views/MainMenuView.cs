@@ -7,25 +7,45 @@ public class MainMenuView : MonoBehaviour
     [SerializeField] private GameObject _mainMenuPanel;
     [SerializeField] private GameObject _objectToHideOnSettings;
     [SerializeField] private Button _playButton;
+    [SerializeField] private Button _playPeaceModeButton;
     [SerializeField] private Button _settingsButton;
     [SerializeField] private Button _exitButton;
 
     public event Action PlayClicked;
+    public event Action PlayPeaceModeClicked;
     public event Action SettingsClicked;
     public event Action ExitClicked;
 
     private void OnEnable()
     {
-        _playButton.onClick.AddListener(RaisePlayClicked);
-        _settingsButton.onClick.AddListener(RaiseSettingsClicked);
-        _exitButton.onClick.AddListener(RaiseExitClicked);
+        BindMissingButtons();
+
+        if (_playButton != null)
+            _playButton.onClick.AddListener(RaisePlayClicked);
+
+        if (_playPeaceModeButton != null)
+            _playPeaceModeButton.onClick.AddListener(RaisePlayPeaceModeClicked);
+
+        if (_settingsButton != null)
+            _settingsButton.onClick.AddListener(RaiseSettingsClicked);
+
+        if (_exitButton != null)
+            _exitButton.onClick.AddListener(RaiseExitClicked);
     }
 
     private void OnDisable()
     {
-        _playButton.onClick.RemoveListener(RaisePlayClicked);
-        _settingsButton.onClick.RemoveListener(RaiseSettingsClicked);
-        _exitButton.onClick.RemoveListener(RaiseExitClicked);
+        if (_playButton != null)
+            _playButton.onClick.RemoveListener(RaisePlayClicked);
+
+        if (_playPeaceModeButton != null)
+            _playPeaceModeButton.onClick.RemoveListener(RaisePlayPeaceModeClicked);
+
+        if (_settingsButton != null)
+            _settingsButton.onClick.RemoveListener(RaiseSettingsClicked);
+
+        if (_exitButton != null)
+            _exitButton.onClick.RemoveListener(RaiseExitClicked);
     }
 
     public void Show()
@@ -47,6 +67,31 @@ public class MainMenuView : MonoBehaviour
     }
 
     private void RaisePlayClicked() => PlayClicked?.Invoke();
+    private void RaisePlayPeaceModeClicked() => PlayPeaceModeClicked?.Invoke();
     private void RaiseSettingsClicked() => SettingsClicked?.Invoke();
     private void RaiseExitClicked() => ExitClicked?.Invoke();
+
+    private void BindMissingButtons()
+    {
+        if (_playPeaceModeButton != null)
+            return;
+
+        foreach (Button button in GetComponentsInChildren<Button>(true))
+        {
+            if (button.name == "Play peace mode")
+            {
+                _playPeaceModeButton = button;
+                return;
+            }
+        }
+
+        foreach (Button button in FindObjectsOfType<Button>(true))
+        {
+            if (button.name == "Play peace mode")
+            {
+                _playPeaceModeButton = button;
+                return;
+            }
+        }
+    }
 }

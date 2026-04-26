@@ -69,7 +69,7 @@ public sealed class BossDamageHitbox : MonoBehaviour
             return;
 
         _damagedTargets.Add(victim);
-        victim.TakeDamage(new DamageInfo(_damageAmount, _damageType));
+        victim.TakeDamage(new DamageInfo(_damageAmount, _damageType, transform.root.gameObject));
     }
 
     private IDamageable FindDamageable(Collider other)

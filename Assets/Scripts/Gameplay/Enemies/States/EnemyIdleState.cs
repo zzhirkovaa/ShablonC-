@@ -13,7 +13,7 @@ public sealed class EnemyIdleState : EnemyStateBase
         Context.StopMotion();
     }
 
-    public override void LogicUpdate()
+    public override void Tick()
     {
         if (!Context.HasPlayer)
             return;
@@ -23,6 +23,9 @@ public sealed class EnemyIdleState : EnemyStateBase
             StateMachine.ChangeState(Context.FleeState, Context.GetFleeReasonLabel());
             return;
         }
+
+        if (Context.IsPeacefulMode)
+            return;
 
         if (Context.IsPlayerInAttackRange)
         {
@@ -34,7 +37,7 @@ public sealed class EnemyIdleState : EnemyStateBase
             StateMachine.ChangeState(Context.AggressionState, "Player detected from idle");
     }
 
-    public override void PhysicsUpdate()
+    public override void FixedTick()
     {
         Context.StopMotion();
     }

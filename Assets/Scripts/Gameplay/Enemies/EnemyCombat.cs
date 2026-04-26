@@ -34,6 +34,7 @@ public class EnemyCombat : MonoBehaviour
         if (_combatLogic.TryCreateDamage(transform.position, _player.position, out DamageInfo damage) &&
             _player.TryGetComponent<IDamageable>(out var victim))
         {
+            damage.Source = gameObject;
             victim.TakeDamage(damage);
         }
     }

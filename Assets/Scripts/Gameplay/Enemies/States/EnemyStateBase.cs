@@ -19,11 +19,11 @@ public abstract class EnemyStateBase : IEnemyState
     {
     }
 
-    public virtual void LogicUpdate()
+    public virtual void Tick()
     {
     }
 
-    public virtual void PhysicsUpdate()
+    public virtual void FixedTick()
     {
     }
 
