@@ -15,6 +15,9 @@ public sealed class BossIdleState : AbstractBossState
         if (TryEnterDeath())
             return;
 
+        if (TryEnterHeal())
+            return;
+
         if (Boss.IsPeacefulMode && !Context.WasProvokedByPlayer)
             return;
 

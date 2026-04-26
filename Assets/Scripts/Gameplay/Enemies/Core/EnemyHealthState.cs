@@ -43,6 +43,24 @@ public sealed class EnemyHealthState
         return true;
     }
 
+    public void Heal(float amount)
+    {
+        if (_isDead)
+            return;
+
+        _currentHealth = Mathf.Clamp(_currentHealth + amount, 0f, _maxHealth);
+        HealthChanged?.Invoke(_currentHealth / _maxHealth);
+    }
+
+    public void RestoreToFull()
+    {
+        if (_isDead)
+            return;
+
+        _currentHealth = _maxHealth;
+        HealthChanged?.Invoke(_currentHealth / _maxHealth);
+    }
+
     public void Restore(float currentHealth, bool isDead)
     {
         _currentHealth = Mathf.Clamp(currentHealth, 0f, _maxHealth);

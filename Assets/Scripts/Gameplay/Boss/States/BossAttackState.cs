@@ -36,11 +36,14 @@ public sealed class BossAttackState : AbstractBossState
         if (TryEnterDeath())
             return;
 
+        if (TryEnterEnrage())
+            return;
+
         _elapsed += Time.deltaTime;
         TickDamageWindow(Boss.AttackDuration, Boss.AttackDamageWindowStart, Boss.AttackDamageWindowEnd);
 
         if (Boss.ConsumeAttackAnimationFinished() || _elapsed >= Boss.AttackDuration)
-            StateMachine.ChangeState(Boss.AggroState, "Boss finished normal attack");
+            StateMachine.ChangeState(Boss.SelectMovementOrIdleState(), "Boss finished normal attack");
     }
 
     public override void FixedTick()

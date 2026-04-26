@@ -37,6 +37,24 @@ public abstract class AbstractBossState : IBossState
         return true;
     }
 
+    protected bool TryEnterEnrage()
+    {
+        if (!Context.ShouldEnterEnrage)
+            return false;
+
+        StateMachine.ChangeState(Boss.EnrageState, "Boss HP dropped below enrage threshold");
+        return true;
+    }
+
+    protected bool TryEnterHeal()
+    {
+        if (!Context.CanEnterHeal)
+            return false;
+
+        StateMachine.ChangeState(Boss.HealState, "Boss HP dropped below heal threshold");
+        return true;
+    }
+
     protected void FaceTarget(float deltaTime)
     {
         Vector3 direction = Context.DirectionToTarget;

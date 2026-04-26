@@ -809,7 +809,7 @@ MonoBehaviour:
   _mainMenuPanel: {fileID: 313010625}
   _objectToHideOnSettings: {fileID: 2074171139}
   _playButton: {fileID: 1800885686}
-  _playPeaceModeButton: {fileID: 0}
+  _playPeaceModeButton: {fileID: 1332490990}
   _settingsButton: {fileID: 135773975}
   _exitButton: {fileID: 1322539817}
 --- !u!1 &339584888
@@ -3562,7 +3562,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: f0e953f995de34f4793c184e10fb3d52, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 14.8
+      value: 11
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: f0e953f995de34f4793c184e10fb3d52, type: 3}
       propertyPath: m_LocalPosition.z

@@ -10,6 +10,11 @@ public sealed class BossController : MonoBehaviour
     [SerializeField] private float _attackRange = 4f;
     [SerializeField] private bool _isPeacefulMode;
 
+    [Header("Movement")]
+    [SerializeField] private float _chaseSpeed = 3.5f;
+    [SerializeField] private float _finisherChaseSpeed = 5.25f;
+    [SerializeField] private float _playerLowHealthThreshold = 0.5f;
+
     [Header("Damage")]
     [SerializeField] private float _attackDamage = 18f;
     [SerializeField] private float _heavyAttackDamage = 36f;
@@ -30,7 +35,15 @@ public sealed class BossController : MonoBehaviour
 
     [Header("Phase 2")]
     [SerializeField] private float _phaseTwoHealthThreshold = 0.5f;
+    [SerializeField] private float _enrageDuration = 1.1f;
     [SerializeField] private float _enragedAttackSpeedMultiplier = 1.5f;
+
+    [Header("Healing")]
+    [SerializeField] private bool _canHealOnce = true;
+    [SerializeField] private float _healThreshold = 0.5f;
+    [SerializeField] private float _healDuration = 2f;
+    [SerializeField] private bool _healToFull = true;
+    [SerializeField] private float _healAmount = 50f;
 
     [Header("References")]
     [SerializeField] private Transform _target;
@@ -45,11 +58,11 @@ public sealed class BossController : MonoBehaviour
     [SerializeField] private string _enrageTriggerParameter = "Enrage";
     [SerializeField] private string _isEnragedParameter = "IsEnraged";
     [SerializeField] private string _attackSpeedMultiplierParameter = "AttackSpeedMultiplier";
+    [SerializeField] private string _healTriggerParameter = "Heal";
 
     private readonly HashSet<string> _missingAnimatorParameters = new HashSet<string>();
     private bool _attackAnimationFinished;
     private bool _damageWindowOpenedThisAttack;
-    private bool _hasEnteredPhaseTwo;
     private float _activeAttackDamage;
 
     public BossStateMachine StateMachine { get; private set; }
@@ -57,8 +70,11 @@ public sealed class BossController : MonoBehaviour
 
     public BossIdleState IdleState { get; private set; }
     public BossAggroState AggroState { get; private set; }
+    public BossChaseState ChaseState { get; private set; }
     public BossAttackState AttackState { get; private set; }
     public BossHeavyAttackState HeavyAttackState { get; private set; }
+    public BossEnrageState EnrageState { get; private set; }
+    public BossHealState HealState { get; private set; }
     public BossDeathState DeathState { get; private set; }
 
     public float DetectionRadius => _detectionRadius;
@@ -74,6 +90,17 @@ public sealed class BossController : MonoBehaviour
     public float AttackDamageWindowEnd => Mathf.Max(_attackDamageWindowStart, _attackDamageWindowEnd);
     public float HeavyAttackDamageWindowStart => _heavyAttackDamageWindowStart;
     public float HeavyAttackDamageWindowEnd => Mathf.Max(_heavyAttackDamageWindowStart, _heavyAttackDamageWindowEnd);
+    public float ChaseSpeed => _chaseSpeed;
+    public float FinisherChaseSpeed => _finisherChaseSpeed;
+    public float PlayerLowHealthThreshold => _playerLowHealthThreshold;
+    public float EnrageHealthThreshold => _phaseTwoHealthThreshold;
+    public float EnrageDuration => _enrageDuration;
+    public float EnragedAttackSpeedMultiplier => _enragedAttackSpeedMultiplier;
+    public bool CanHealOnce => _canHealOnce;
+    public float HealThreshold => _healThreshold;
+    public float HealDuration => _healDuration;
+    public bool HealToFull => _healToFull;
+    public float HealAmount => _healAmount;
     public bool IsPeacefulMode => Context != null ? Context.IsPeacefulMode : _isPeacefulMode;
     public bool IsEnraged => Context != null && Context.IsEnraged;
     public bool HasDamageWindowOpenedThisAttack => _damageWindowOpenedThisAttack;
@@ -90,8 +117,11 @@ public sealed class BossController : MonoBehaviour
 
         IdleState = new BossIdleState(Context, StateMachine);
         AggroState = new BossAggroState(Context, StateMachine);
+        ChaseState = new BossChaseState(Context, StateMachine);
         AttackState = new BossAttackState(Context, StateMachine);
         HeavyAttackState = new BossHeavyAttackState(Context, StateMachine);
+        EnrageState = new BossEnrageState(Context, StateMachine);
+        HealState = new BossHealState(Context, StateMachine);
         DeathState = new BossDeathState(Context, StateMachine);
 
         SubscribeToHealth();
@@ -146,9 +176,15 @@ public sealed class BossController : MonoBehaviour
 
     public void MoveToTarget()
     {
+        MoveToTarget(_chaseSpeed);
+    }
+
+    public void MoveToTarget(float speed)
+    {
         if (_agent == null || !_agent.enabled || !_agent.isOnNavMesh || !Context.HasTarget)
             return;
 
+        _agent.speed = speed;
         _agent.isStopped = false;
         _agent.SetDestination(Context.Target.position);
         SetAnimatorBool(_isMovingParameter, true);
@@ -253,16 +289,51 @@ public sealed class BossController : MonoBehaviour
 
     public void EnterPhaseTwo()
     {
-        if (_hasEnteredPhaseTwo || Context == null || Context.IsDead)
+        if (Context == null || Context.IsDead)
             return;
 
-        _hasEnteredPhaseTwo = true;
         Context.EnterEnrage(_enragedAttackSpeedMultiplier);
         SetAnimatorBool(_isEnragedParameter, true);
         SetAnimatorFloat(_attackSpeedMultiplierParameter, Context.AttackSpeedMultiplier);
-        SetAnimatorTrigger(_enrageTriggerParameter);
 
         Debug.Log($"[{gameObject.name}] Boss entered phase 2. Attack speed multiplier: {_enragedAttackSpeedMultiplier}");
+    }
+
+    public void BeginEnrageAnimation()
+    {
+        StopMovement();
+        SetAnimatorBool(_isMovingParameter, false);
+        SetAnimatorBool(_isEnragedParameter, true);
+        SetAnimatorFloat(_attackSpeedMultiplierParameter, Context.AttackSpeedMultiplier);
+        SetAnimatorTrigger(_enrageTriggerParameter);
+    }
+
+    public void BeginHealAnimation()
+    {
+        StopMovement();
+        SetAnimatorBool(_isMovingParameter, false);
+        SetAnimatorTrigger(_healTriggerParameter);
+    }
+
+    public void Heal(float amount)
+    {
+        _health?.Heal(amount);
+    }
+
+    public void RestoreHealthToFull()
+    {
+        _health?.RestoreToFull();
+    }
+
+    public IBossState SelectMovementOrIdleState()
+    {
+        if (!Context.HasTarget || Context.HasLostTarget)
+            return IdleState;
+
+        if (Context.IsTargetInAttackRange)
+            return AggroState;
+
+        return ChaseState;
     }
 
     private void CacheComponents()
@@ -342,8 +413,8 @@ public sealed class BossController : MonoBehaviour
 
     private void HandleHealthChanged(float healthRatio)
     {
-        if (!_hasEnteredPhaseTwo && healthRatio <= _phaseTwoHealthThreshold)
-            EnterPhaseTwo();
+        if (healthRatio <= _phaseTwoHealthThreshold)
+            Context?.RequestEnrage();
     }
 
     private void HandleDied()

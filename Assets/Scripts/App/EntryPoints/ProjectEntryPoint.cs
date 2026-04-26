@@ -5,6 +5,7 @@ using UnityEngine.SceneManagement;
 public sealed class ProjectEntryPoint : MonoBehaviour
 {
     [SerializeField] private string _startupSceneName = "MainMenu";
+    [SerializeField] private string _bootstrapSceneName = "Bootstrap";
 
     private AppServices _appServices;
 
@@ -33,11 +34,14 @@ public sealed class ProjectEntryPoint : MonoBehaviour
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
+        if (scene.name == _bootstrapSceneName)
+            return;
+
         SceneEntryPointBase sceneEntryPoint = FindObjectOfType<SceneEntryPointBase>();
 
         if (sceneEntryPoint == null)
         {
-            Debug.LogWarning($"SceneEntryPointBase не найден на сцене {scene.name}");
+            Debug.LogWarning($"SceneEntryPointBase was not found on scene {scene.name}");
             return;
         }
 

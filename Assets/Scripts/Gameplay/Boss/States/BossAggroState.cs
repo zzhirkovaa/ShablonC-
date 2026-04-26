@@ -16,11 +16,23 @@ public class BossAggroState : AbstractBossState
         if (TryEnterDeath())
             return;
 
+        if (Boss.IsPeacefulMode && !Context.WasProvokedByPlayer)
+        {
+            StateMachine.ChangeState(Boss.IdleState, "Peaceful mode suppresses unprovoked boss aggression");
+            return;
+        }
+
         if (Context.HasLostTarget)
         {
+            if (TryEnterHeal())
+                return;
+
             StateMachine.ChangeState(Boss.IdleState, "Boss lost the player");
             return;
         }
+
+        if (TryEnterEnrage())
+            return;
 
         if (Context.IsTargetInAttackRange)
         {
@@ -39,7 +51,7 @@ public class BossAggroState : AbstractBossState
             return;
         }
 
-        Boss.MoveToTarget();
+        StateMachine.ChangeState(Boss.ChaseState, "Player is outside attack range");
     }
 
     public override void FixedTick()

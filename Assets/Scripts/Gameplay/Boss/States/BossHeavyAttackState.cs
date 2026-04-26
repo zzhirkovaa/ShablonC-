@@ -36,11 +36,14 @@ public class BossHeavyAttackState : AbstractBossState
         if (TryEnterDeath())
             return;
 
+        if (TryEnterEnrage())
+            return;
+
         _elapsed += Time.deltaTime;
         TickDamageWindow(Boss.HeavyAttackDuration, Boss.HeavyAttackDamageWindowStart, Boss.HeavyAttackDamageWindowEnd);
 
         if (Boss.ConsumeAttackAnimationFinished() || _elapsed >= Boss.HeavyAttackDuration)
-            StateMachine.ChangeState(Boss.AggroState, "Boss finished heavy attack");
+            StateMachine.ChangeState(Boss.SelectMovementOrIdleState(), "Boss finished heavy attack");
     }
 
     public override void FixedTick()

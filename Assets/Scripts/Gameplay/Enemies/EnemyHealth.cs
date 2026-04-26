@@ -98,6 +98,22 @@ public class EnemyHealth : MonoBehaviour, IDamageable, IHealth
         ApplyAlivePresentation();
     }
 
+    public void Heal(float amount)
+    {
+        if (_state == null || _state.IsDead)
+            return;
+
+        _state.Heal(amount);
+    }
+
+    public void RestoreToFull()
+    {
+        if (_state == null || _state.IsDead)
+            return;
+
+        _state.RestoreToFull();
+    }
+
     private void RaiseHealthChanged(float healthPercentage)
     {
         OnHealthChanged?.Invoke(healthPercentage);
