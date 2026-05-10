@@ -2,10 +2,13 @@ using UnityEngine;
 
 public class EnemyRangedCombat : MonoBehaviour
 {
-    [Header("Настройки стрельбы")]
+    [Header("РќР°СЃС‚СЂРѕР№РєРё СЃС‚СЂРµР»СЊР±С‹")]
     public GameObject projectilePrefab;
     public Transform firePoint;
     public float attackCooldown = 3f;
+    public float projectileDamage = 12f;
+    public float projectileSpeed = 15f;
+    public float projectileLifetime = 5f;
 
     private Transform _player;
     private CooldownState _cooldownState;
@@ -43,9 +46,59 @@ public class EnemyRangedCombat : MonoBehaviour
 
     public void Shoot()
     {
-        if (_player == null)
+        if (_player == null || projectilePrefab == null || firePoint == null)
             return;
 
-        _attackLogic.ShootAtTarget(transform, _player, projectilePrefab, firePoint);
+        GameObject projectileObject = _attackLogic.ShootAtTarget(transform, _player, projectilePrefab, firePoint);
+        if (projectileObject == null)
+            return;
+
+        Projectile projectile = EnsureProjectileRuntimeSetup(projectileObject);
+        projectile.owner = gameObject;
+        projectile.damageAmount = projectileDamage;
+        projectile.speed = projectileSpeed;
+        projectile.lifetime = projectileLifetime;
+    }
+
+    public void ApplyWeaponConfig(RangedWeaponConfigSO weaponConfig)
+    {
+        if (weaponConfig == null)
+            return;
+
+        projectilePrefab = weaponConfig.ProjectilePrefab;
+        attackCooldown = weaponConfig.AttackCooldown;
+        projectileDamage = weaponConfig.Damage;
+        projectileSpeed = weaponConfig.ProjectileSpeed;
+        projectileLifetime = weaponConfig.ProjectileLifetime;
+
+        Transform resolvedFirePoint = TransformSearchUtility.FindChildRecursive(transform, weaponConfig.FirePointName);
+        if (resolvedFirePoint != null)
+            firePoint = resolvedFirePoint;
+
+        _cooldownState = new CooldownState(attackCooldown);
+    }
+
+    private Projectile EnsureProjectileRuntimeSetup(GameObject projectileObject)
+    {
+        Projectile projectile =
+            projectileObject.GetComponent<Projectile>() ??
+            projectileObject.AddComponent<Projectile>();
+
+        Collider projectileCollider = projectileObject.GetComponent<Collider>();
+        if (projectileCollider == null)
+            projectileCollider = projectileObject.AddComponent<SphereCollider>();
+
+        projectileCollider.isTrigger = true;
+
+        Rigidbody projectileBody = projectileObject.GetComponent<Rigidbody>();
+        if (projectileBody == null)
+            projectileBody = projectileObject.AddComponent<Rigidbody>();
+
+        projectileBody.useGravity = false;
+        projectileBody.isKinematic = true;
+        projectileBody.linearVelocity = Vector3.zero;
+        projectileBody.angularVelocity = Vector3.zero;
+
+        return projectile;
     }
 }

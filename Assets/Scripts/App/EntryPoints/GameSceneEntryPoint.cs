@@ -101,6 +101,7 @@ public sealed class GameSceneEntryPoint : SceneEntryPointBase
 
         InjectBoss();
         InjectPlayerIntoEnemies();
+        InjectPlayerIntoSpawners();
     }
 
     private void InjectBoss()
@@ -222,6 +223,13 @@ public sealed class GameSceneEntryPoint : SceneEntryPointBase
         EnemyRangedCombat[] rangedCombat = Object.FindObjectsOfType<EnemyRangedCombat>();
         foreach (EnemyRangedCombat enemyCombat in rangedCombat)
             enemyCombat.Construct(_playerController.transform);
+    }
+
+    private void InjectPlayerIntoSpawners()
+    {
+        EnemySpawner[] spawners = Object.FindObjectsOfType<EnemySpawner>();
+        foreach (EnemySpawner spawner in spawners)
+            spawner.Construct(_playerController.transform, _gameModeService.IsPeacefulMode);
     }
 
     private void OnDestroy()

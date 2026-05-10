@@ -68,6 +68,11 @@ public abstract class EnemyStatefulAIBase : MonoBehaviour
         Context?.SetPeacefulMode(isPeacefulMode);
     }
 
+    public void OverrideAttackRange(float attackRange)
+    {
+        Context?.SetAttackRange(attackRange);
+    }
+
     protected virtual void Update()
     {
         Context?.Tick(Time.deltaTime);

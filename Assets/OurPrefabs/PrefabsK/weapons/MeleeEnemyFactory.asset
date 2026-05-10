@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c6b606060dea23b4a867890b8219c8c0, type: 3}
+  m_Name: MeleeEnemyFactory
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyFactorySO
+  _enemyPrefab: {fileID: 7502848963945797488, guid: 16b7987af26389b46b66a30703c78cec, type: 3}
+  _availableWeapons:
+  - {fileID: 11400000, guid: 198afa84811cdf84ea2b11ce95bdf0de, type: 2}
+  - {fileID: 11400000, guid: 6d8eb51e249aae14ebd60f1d5971b621, type: 2}

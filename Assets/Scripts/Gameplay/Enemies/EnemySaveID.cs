@@ -25,6 +25,11 @@ public class EnemySaveId : MonoBehaviour
         RegisteredInstancesInternal.Remove(this);
     }
 
+    public void Unregister()
+    {
+        RegisteredInstancesInternal.Remove(this);
+    }
+
     private void Register()
     {
         if (!RegisteredInstancesInternal.Contains(this))

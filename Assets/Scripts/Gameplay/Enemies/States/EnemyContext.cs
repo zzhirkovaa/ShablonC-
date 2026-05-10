@@ -49,7 +49,7 @@ public sealed class EnemyContext
     public EnemyHealth Health { get; }
 
     public float DetectionRadius { get; }
-    public float AttackRange { get; }
+    public float AttackRange { get; private set; }
     public float MoveSpeed { get; }
     public float RotationSpeed { get; }
     public float FleeDuration { get; }
@@ -77,6 +77,11 @@ public sealed class EnemyContext
     {
         PlayerTransform = playerTransform;
         MovementBounds = movementBounds;
+    }
+
+    public void SetAttackRange(float attackRange)
+    {
+        AttackRange = Mathf.Max(0.1f, attackRange);
     }
 
     public void Tick(float deltaTime)

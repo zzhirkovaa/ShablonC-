@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8546a93c39a12464390db98643ac4deb, type: 3}
+  m_Name: PoisonSpitConfig
+  m_EditorClassIdentifier: Assembly-CSharp::RangedWeaponConfigSO
+  _weaponName: Weapon
+  _weaponKind: 0
+  _damage: 4
+  _attackRange: 2
+  _attackCooldown: 2
+  _animationTrigger: Attack
+  _projectilePrefab: {fileID: 2686652501048074628, guid: cc1ed15d12426b94da218650f1285151, type: 3}
+  _projectileSpeed: 15
+  _projectileLifetime: 5
+  _firePointName: spawnPRJ
