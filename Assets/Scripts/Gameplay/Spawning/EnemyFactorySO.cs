@@ -43,6 +43,9 @@ public sealed class EnemyFactorySO : ScriptableObject
             Destroy(saveId);
         }
 
+        if (enemyObject.TryGetComponent(out EnemyRoomReference roomReference))
+            roomReference.SetRoomBounds(roomBounds);
+
         if (enemyObject.TryGetComponent(out EnemyAI enemyAI))
         {
             enemyAI.SetPeacefulMode(isPeacefulMode);

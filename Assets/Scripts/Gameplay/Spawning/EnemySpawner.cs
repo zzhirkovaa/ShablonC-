@@ -18,6 +18,8 @@ public sealed class EnemySpawner : MonoBehaviour
     [SerializeField] private RoomBounds _roomBounds;
     [SerializeField] private bool _useNavMesh = true;
     [SerializeField] private float _navMeshSampleDistance = 4f;
+    [SerializeField] private float _spawnClearRadius = 1.25f;
+    [SerializeField] private int _spawnPositionAttempts = 12;
 
     private Transform _playerTransform;
     private bool _isPeacefulMode;
@@ -38,6 +40,9 @@ public sealed class EnemySpawner : MonoBehaviour
     {
         if (_roomBounds == null)
             _roomBounds = GetComponent<RoomBounds>();
+
+        if (_roomBounds == null)
+            _roomBounds = GetComponentInParent<RoomBounds>();
     }
 
     private void OnDisable()
@@ -120,17 +125,23 @@ public sealed class EnemySpawner : MonoBehaviour
 
     private Vector3 ResolveSpawnPosition()
     {
-        Vector3 basePosition = _positionMode == SpawnPositionMode.SpawnPoints && _spawnPoints != null && _spawnPoints.Length > 0
-            ? SelectSpawnPointPosition()
-            : SelectRandomRadiusPosition();
+        int attempts = Mathf.Max(1, _spawnPositionAttempts);
+        Vector3 fallbackPosition = transform.position;
 
-        if (_roomBounds != null)
-            basePosition = _roomBounds.ClampPosition(basePosition);
+        for (int i = 0; i < attempts; i++)
+        {
+            Vector3 candidate = _positionMode == SpawnPositionMode.SpawnPoints && _spawnPoints != null && _spawnPoints.Length > 0
+                ? SelectSpawnPointPosition()
+                : SelectRandomRadiusPosition();
 
-        if (_useNavMesh && NavMesh.SamplePosition(basePosition, out NavMeshHit hit, _navMeshSampleDistance, NavMesh.AllAreas))
-            basePosition = hit.position;
+            candidate = ApplyBounds(candidate);
+            fallbackPosition = candidate;
 
-        return basePosition;
+            if (IsSpawnPositionFree(candidate))
+                return candidate;
+        }
+
+        return fallbackPosition;
     }
 
     private Vector3 SelectSpawnPointPosition()
@@ -152,5 +163,37 @@ public sealed class EnemySpawner : MonoBehaviour
     {
         Vector2 offset = Random.insideUnitCircle * Mathf.Max(0f, _spawnRadius);
         return transform.position + new Vector3(offset.x, 0f, offset.y);
+    }
+
+    private Vector3 ApplyBounds(Vector3 position)
+    {
+        if (_roomBounds != null)
+            position = _roomBounds.ClampPosition(position);
+
+        if (_useNavMesh && NavMesh.SamplePosition(position, out NavMeshHit hit, _navMeshSampleDistance, NavMesh.AllAreas))
+            position = hit.position;
+
+        return position;
+    }
+
+    private bool IsSpawnPositionFree(Vector3 position)
+    {
+        float radius = Mathf.Max(0.1f, _spawnClearRadius);
+        Vector3 checkCenter = position + Vector3.up * radius;
+        Collider[] overlaps = Physics.OverlapSphere(checkCenter, radius, ~0, QueryTriggerInteraction.Ignore);
+
+        foreach (Collider overlap in overlaps)
+        {
+            if (overlap == null)
+                continue;
+
+            if (overlap.transform.IsChildOf(transform))
+                continue;
+
+            if (overlap.GetComponentInParent<EnemyHealth>() != null)
+                return false;
+        }
+
+        return true;
     }
 }

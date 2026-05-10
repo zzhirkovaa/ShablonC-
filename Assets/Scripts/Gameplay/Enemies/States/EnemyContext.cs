@@ -3,6 +3,9 @@ using UnityEngine;
 public sealed class EnemyContext
 {
     private const float PeacefulFleeHealthThreshold = 0.5f;
+    private const float EnemySeparationRadius = 1f;
+    private const float EnemySeparationWeight = 0.65f;
+    private const float EnemySeparationHeightOffset = 0.5f;
 
     public EnemyContext(
         Transform transform,
@@ -222,7 +225,12 @@ public sealed class EnemyContext
             return;
         }
 
-        Vector3 targetPosition = Transform.position + direction.normalized * MoveSpeed * deltaTime;
+        Vector3 finalDirection = direction.normalized;
+        Vector3 separationDirection = GetEnemySeparationDirection();
+        if (separationDirection != Vector3.zero)
+            finalDirection = (finalDirection + separationDirection * EnemySeparationWeight).normalized;
+
+        Vector3 targetPosition = Transform.position + finalDirection * MoveSpeed * deltaTime;
         if (MovementBounds != null)
             targetPosition = MovementBounds.ClampPosition(targetPosition);
 
@@ -230,6 +238,40 @@ public sealed class EnemyContext
             Rigidbody.MovePosition(targetPosition);
         else
             Transform.position = targetPosition;
+    }
+
+    private Vector3 GetEnemySeparationDirection()
+    {
+        Vector3 checkCenter = Transform.position + Vector3.up * EnemySeparationHeightOffset;
+        Collider[] overlaps = Physics.OverlapSphere(
+            checkCenter,
+            EnemySeparationRadius,
+            ~0,
+            QueryTriggerInteraction.Ignore);
+
+        Vector3 separation = Vector3.zero;
+
+        foreach (Collider overlap in overlaps)
+        {
+            if (overlap == null)
+                continue;
+
+            EnemyHealth otherEnemy = overlap.GetComponentInParent<EnemyHealth>();
+            if (otherEnemy == null || otherEnemy.gameObject == Transform.gameObject)
+                continue;
+
+            Vector3 away = Transform.position - otherEnemy.transform.position;
+            away.y = 0f;
+
+            if (away.sqrMagnitude > 0.0001f)
+                separation += away.normalized;
+        }
+
+        if (separation == Vector3.zero)
+            return Vector3.zero;
+
+        separation.y = 0f;
+        return separation.normalized;
     }
 
     public void StopMotion()
