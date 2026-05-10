@@ -39,15 +39,21 @@ public class BossAggroState : AbstractBossState
             Boss.StopMovement();
             FaceTarget(Time.deltaTime);
 
-            if (Context.CanUseHeavyAttack)
+            IBossState attackState = Boss.SelectReadyAttackState();
+            if (attackState != null)
             {
-                StateMachine.ChangeState(Boss.HeavyAttackState, "Heavy attack cooldown is ready");
-                return;
+                StateMachine.ChangeState(attackState, "Boss selected an attack from aggro");
             }
 
-            if (Context.CanUseAttack)
-                StateMachine.ChangeState(Boss.AttackState, "Player is in attack range");
+            return;
+        }
 
+        IBossState rangedFireState = Boss.SelectReadyRangedFireAttackState(true);
+        if (rangedFireState != null)
+        {
+            Boss.StopMovement();
+            FaceTarget(Time.deltaTime);
+            StateMachine.ChangeState(rangedFireState, "Boss casts fire before chasing distant player");
             return;
         }
 

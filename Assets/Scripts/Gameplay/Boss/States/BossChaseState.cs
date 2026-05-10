@@ -9,6 +9,12 @@ public sealed class BossChaseState : AbstractBossState
     public override void Enter()
     {
         Boss.DisableDamageHitboxes();
+
+        if (!Context.HasLostTarget)
+        {
+            float speed = Context.IsTargetHealthLow ? Boss.FinisherChaseSpeed : Boss.ChaseSpeed;
+            Boss.MoveToTarget(speed);
+        }
     }
 
     public override void Exit()
@@ -43,15 +49,21 @@ public sealed class BossChaseState : AbstractBossState
         {
             Boss.StopMovement();
 
-            if (Context.CanUseHeavyAttack)
+            IBossState attackState = Boss.SelectReadyAttackState();
+            if (attackState != null)
             {
-                StateMachine.ChangeState(Boss.HeavyAttackState, "Heavy attack cooldown is ready after chase");
-                return;
+                StateMachine.ChangeState(attackState, "Boss selected an attack after chase");
             }
 
-            if (Context.CanUseAttack)
-                StateMachine.ChangeState(Boss.AttackState, "Player reached attack range during chase");
+            return;
+        }
 
+        IBossState rangedFireState = Boss.SelectReadyRangedFireAttackState(false);
+        if (rangedFireState != null)
+        {
+            Boss.StopMovement();
+            FaceTarget(Time.deltaTime);
+            StateMachine.ChangeState(rangedFireState, "Boss casts fire at distant player during chase");
             return;
         }
 

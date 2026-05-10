@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b0253afb93a6146b6935e8779a0b25b0, type: 3}
+  m_Name: FireBossElementConfig
+  m_EditorClassIdentifier: Assembly-CSharp::BossElementConfig
+  _elementType: 0
+  _usesMeleeHitboxes: 0
+  _kickTriggerName: Fire
+  _heavyHandsTriggerName: 
+  _kickDurationOverride: 4.6
+  _heavyHandsDurationOverride: 4.6
+  _fireProjectilePrefab: {fileID: 9102996226028448179, guid: 797a52a2f5d4f4913bd6507c5fc32f76, type: 3}
+  _fireProjectileSpeed: 12
+  _fireDirectDamage: 10
+  _fireBurnDamagePerSecond: 5
+  _fireBurnDuration: 3
+  _earthEffectPrefab: {fileID: 0}
+  _earthRadius: 5
+  _earthKnockUpHeight: 4
+  _earthControlDisableDuration: 3
+  _airEffectPrefab: {fileID: 0}
+  _airProjectilePrefab: {fileID: 0}
+  _airProjectileSpeed: 12
+  _airSpinDuration: 1.25
+  _airSpinDegrees: 720
+  _airDistance: 8
+  _airForwardDotThreshold: 0.35
+  _airPullDuration: 1.25
+  _airPullSpeed: 8
+  _airStopDistance: 2.25
+  _iceLeftHandEffectPrefab: {fileID: 0}
+  _iceRightHandEffectPrefab: {fileID: 0}
+  _iceFreezeDuration: 5
+  _effectLifetime: 2

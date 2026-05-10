@@ -3,6 +3,7 @@ using UnityEngine;
 public class BossHeavyAttackState : AbstractBossState
 {
     private float _elapsed;
+    private float _duration;
     private bool _hitboxesEnabledByFallback;
     private bool _damageWindowOpened;
 
@@ -22,6 +23,7 @@ public class BossHeavyAttackState : AbstractBossState
         }
 
         _elapsed = 0f;
+        _duration = Boss.GetAttackDuration(BossAttackType.HeavyHands);
         _hitboxesEnabledByFallback = false;
         _damageWindowOpened = false;
     }
@@ -29,6 +31,7 @@ public class BossHeavyAttackState : AbstractBossState
     public override void Exit()
     {
         Boss.DisableDamageHitboxes();
+        Boss.ClearActiveElementEffects();
     }
 
     public override void Tick()
@@ -40,10 +43,14 @@ public class BossHeavyAttackState : AbstractBossState
             return;
 
         _elapsed += Time.deltaTime;
-        TickDamageWindow(Boss.HeavyAttackDuration, Boss.HeavyAttackDamageWindowStart, Boss.HeavyAttackDamageWindowEnd);
+        TickDamageWindow(_duration, Boss.HeavyAttackDamageWindowStart, Boss.HeavyAttackDamageWindowEnd);
 
-        if (Boss.ConsumeAttackAnimationFinished() || _elapsed >= Boss.HeavyAttackDuration)
-            StateMachine.ChangeState(Boss.SelectMovementOrIdleState(), "Boss finished heavy attack");
+        if (Boss.ConsumeAttackAnimationFinished() || _elapsed >= _duration)
+        {
+            IBossState nextState = Boss.SelectMovementOrIdleState();
+            Boss.PrepareAnimatorForPostAttack(nextState);
+            StateMachine.ChangeState(nextState, "Boss finished heavy attack");
+        }
     }
 
     public override void FixedTick()
@@ -57,7 +64,7 @@ public class BossHeavyAttackState : AbstractBossState
 
         if (!_damageWindowOpened && !Boss.HasDamageWindowOpenedThisAttack && normalizedTime >= startNormalized)
         {
-            Boss.EnableDamageHitboxes();
+            Boss.OpenAttackDamageWindow();
             _hitboxesEnabledByFallback = true;
             _damageWindowOpened = true;
         }

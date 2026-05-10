@@ -112,7 +112,7 @@ public sealed class GameSceneEntryPoint : SceneEntryPointBase
         if (bossObject != null)
             bossController = bossObject.GetComponent<BossController>();
         else
-            bossController = Object.FindFirstObjectByType<BossController>();
+            bossController = FindBossControllerIncludingInactive();
 
         if (bossController == null && bossObject == null)
         {
@@ -126,6 +126,22 @@ public sealed class GameSceneEntryPoint : SceneEntryPointBase
         EnemyRoomReference roomReference = bossController.GetComponent<EnemyRoomReference>();
         bossController.SetPeacefulMode(_gameModeService.IsPeacefulMode);
         bossController.Construct(_playerController.transform, roomReference != null ? roomReference.RoomBounds : null);
+    }
+
+    private BossController FindBossControllerIncludingInactive()
+    {
+        BossController activeBoss = Object.FindFirstObjectByType<BossController>();
+        if (activeBoss != null)
+            return activeBoss;
+
+        BossController[] bosses = Resources.FindObjectsOfTypeAll<BossController>();
+        foreach (BossController boss in bosses)
+        {
+            if (boss != null && boss.gameObject.scene.IsValid())
+                return boss;
+        }
+
+        return null;
     }
 
     private void EnsureEventSystem()

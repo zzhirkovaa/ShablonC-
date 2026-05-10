@@ -6,7 +6,6 @@ public sealed class BossDeathState : AbstractBossState
 
     public override void Enter()
     {
-        Boss.DisableDamageHitboxes();
-        Boss.StopMovement();
+        Boss.BeginDeath();
     }
 }

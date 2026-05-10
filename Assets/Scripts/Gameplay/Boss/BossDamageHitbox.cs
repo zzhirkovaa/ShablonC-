@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System;
 using UnityEngine;
 
 public sealed class BossDamageHitbox : MonoBehaviour
@@ -11,6 +12,8 @@ public sealed class BossDamageHitbox : MonoBehaviour
     private readonly HashSet<IDamageable> _damagedTargets = new HashSet<IDamageable>();
     private bool _isActive;
     private float _damageAmount;
+
+    public event Action<Collider> TargetDamaged;
 
     private void Awake()
     {
@@ -70,6 +73,7 @@ public sealed class BossDamageHitbox : MonoBehaviour
 
         _damagedTargets.Add(victim);
         victim.TakeDamage(new DamageInfo(_damageAmount, _damageType, transform.root.gameObject));
+        TargetDamaged?.Invoke(other);
     }
 
     private IDamageable FindDamageable(Collider other)
