@@ -25,11 +25,13 @@ public sealed class EnemySpawner : MonoBehaviour
     private bool _isPeacefulMode;
     private bool _isInitialized;
     private Coroutine _spawnCoroutine;
+    private EnemyDeathEventHub _enemyDeathEventHub;
 
-    public void Construct(Transform playerTransform, bool isPeacefulMode)
+    public void Construct(Transform playerTransform, bool isPeacefulMode, EnemyDeathEventHub enemyDeathEventHub)
     {
         _playerTransform = playerTransform;
         _isPeacefulMode = isPeacefulMode;
+        _enemyDeathEventHub = enemyDeathEventHub;
         _isInitialized = true;
 
         if (_spawnOnStart && isActiveAndEnabled)
@@ -102,7 +104,7 @@ public sealed class EnemySpawner : MonoBehaviour
 
         Vector3 spawnPosition = ResolveSpawnPosition();
         Quaternion spawnRotation = transform.rotation;
-        factory.Spawn(spawnPosition, spawnRotation, _playerTransform, _roomBounds, _isPeacefulMode);
+        factory.Spawn(spawnPosition, spawnRotation, _playerTransform, _roomBounds, _isPeacefulMode, _enemyDeathEventHub);
     }
 
     private EnemyFactorySO SelectFactory()

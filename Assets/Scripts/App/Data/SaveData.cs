@@ -12,6 +12,7 @@ public class SaveData
 
     public float PlayerHp;
     public float PlayerAbilityCooldownRemaining;
+    public int Score;
 
     public List<EnemySaveData> Enemies = new();
 }

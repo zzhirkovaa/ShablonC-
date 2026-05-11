@@ -6,17 +6,20 @@ public sealed class SaveCurrentGameInteractor
     private readonly ISceneLoader _sceneLoader;
     private readonly IPlayerSaveStateReader _playerSaveStateReader;
     private readonly IEnemySaveStateReader _enemySaveStateReader;
+    private readonly IScoreSaveStateReader _scoreSaveStateReader;
 
     public SaveCurrentGameInteractor(
         SaveGameInteractor saveGameInteractor,
         ISceneLoader sceneLoader,
         IPlayerSaveStateReader playerSaveStateReader,
-        IEnemySaveStateReader enemySaveStateReader)
+        IEnemySaveStateReader enemySaveStateReader,
+        IScoreSaveStateReader scoreSaveStateReader)
     {
         _saveGameInteractor = saveGameInteractor;
         _sceneLoader = sceneLoader;
         _playerSaveStateReader = playerSaveStateReader;
         _enemySaveStateReader = enemySaveStateReader;
+        _scoreSaveStateReader = scoreSaveStateReader;
     }
 
     public void Execute()
@@ -26,6 +29,7 @@ public sealed class SaveCurrentGameInteractor
         _saveGameInteractor.Execute(
             _sceneLoader.CurrentSceneName,
             _playerSaveStateReader.Read(),
-            enemies);
+            enemies,
+            _scoreSaveStateReader.Read());
     }
 }

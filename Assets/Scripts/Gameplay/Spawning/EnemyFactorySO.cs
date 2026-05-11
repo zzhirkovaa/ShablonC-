@@ -17,7 +17,8 @@ public sealed class EnemyFactorySO : ScriptableObject
         Quaternion rotation,
         Transform playerTransform,
         RoomBounds roomBounds,
-        bool isPeacefulMode)
+        bool isPeacefulMode,
+        EnemyDeathEventHub enemyDeathEventHub)
     {
         if (_enemyPrefab == null)
         {
@@ -28,6 +29,7 @@ public sealed class EnemyFactorySO : ScriptableObject
         GameObject enemyObject = Instantiate(_enemyPrefab, position, rotation);
         InitializeRuntime(enemyObject, playerTransform, roomBounds, isPeacefulMode);
         ApplyWeapon(enemyObject);
+        RegisterEnemyDeath(enemyObject, enemyDeathEventHub);
         return enemyObject;
     }
 
@@ -76,6 +78,15 @@ public sealed class EnemyFactorySO : ScriptableObject
             enemyObject.AddComponent<EnemyWeaponController>();
 
         weaponController.InitializeWeapon(selectedWeapon);
+    }
+
+    private static void RegisterEnemyDeath(GameObject enemyObject, EnemyDeathEventHub enemyDeathEventHub)
+    {
+        if (enemyDeathEventHub == null || enemyObject == null)
+            return;
+
+        if (enemyObject.TryGetComponent(out EnemyHealth enemyHealth))
+            enemyDeathEventHub.Register(enemyHealth);
     }
 
     private WeaponConfigSO SelectWeapon()

@@ -19,6 +19,7 @@ public sealed class GameSceneEntryPoint : SceneEntryPointBase
     [SerializeField] private PauseMenuView _pauseMenuView;
     [SerializeField] private HealthBarView _healthBarView;
     [SerializeField] private DeathScreenView _deathScreenView;
+    [SerializeField] private ScoreboardView _scoreboardView;
 
     [Header("Pause")]
     [SerializeField] private MonoBehaviour[] _scriptsToDisableOnPause;
@@ -27,30 +28,56 @@ public sealed class GameSceneEntryPoint : SceneEntryPointBase
     [Header("Boss")]
     [SerializeField] private string _bossObjectName = "Boss";
 
+    [Header("Victory Audio")]
+    [SerializeField] private AudioSource _victoryMusicSource;
+    [SerializeField] private AudioClip _victoryMusicClip;
+    [SerializeField] private AudioSource _backgroundMusicSource;
+
     private Ui.PauseMenu.PauseMenuController _pauseMenuController;
     private HealthBarUiController _healthBarController;
     private DeathScreenUiController _deathScreenController;
+    private ScoreboardUiController _scoreboardController;
     private IGameModeService _gameModeService;
+    private IScoreModel _scoreModel;
+    private EnemyDeathEventHub _enemyDeathEventHub;
+    private EnemyKilledScoreHandler _enemyKilledScoreHandler;
+    private PlayVictoryMusicOnMobKillsInteractor _playVictoryMusicOnMobKillsInteractor;
 
     public override void Initialize(AppServices appServices)
     {
         _gameModeService = appServices.GameModeService;
         ComposePlayer();
         EnsureEventSystem();
+        appServices.AudioService.ConfigureVictoryMusic(
+            _victoryMusicSource,
+            _victoryMusicClip,
+            _backgroundMusicSource);
 
         IPlayerRepository playerRepository = new JsonPlayerRepository(appServices.SaveService);
         IEnemyRepository enemyRepository = new JsonEnemyRepository(appServices.SaveService);
         ISceneStateRepository sceneStateRepository = new JsonSceneStateRepository(appServices.SaveService);
+        IScoreRepository scoreRepository = new JsonScoreRepository(appServices.SaveService);
+        _scoreModel = new ScoreModel();
+        _enemyDeathEventHub = new EnemyDeathEventHub();
+        _enemyKilledScoreHandler = new EnemyKilledScoreHandler(
+            _enemyDeathEventHub,
+            new AddScoreInteractor(_scoreModel),
+            new EnemyScoreRewardResolver());
+        _playVictoryMusicOnMobKillsInteractor = new PlayVictoryMusicOnMobKillsInteractor(
+            _enemyDeathEventHub,
+            appServices.AudioService);
 
         SaveGameInteractor saveGameInteractor = new SaveGameInteractor(
             sceneStateRepository,
             playerRepository,
-            enemyRepository);
+            enemyRepository,
+            scoreRepository);
 
         LoadGameInteractor loadGameInteractor = new LoadGameInteractor(
             sceneStateRepository,
             playerRepository,
-            enemyRepository);
+            enemyRepository,
+            scoreRepository);
 
         IPlayerSaveStateReader playerSaveStateReader = new PlayerSaveStateReader(
             _playerController.transform,
@@ -63,20 +90,24 @@ public sealed class GameSceneEntryPoint : SceneEntryPointBase
 
         IEnemySaveStateReader enemySaveStateReader = new EnemySaveStateReader();
         IEnemySaveStateWriter enemySaveStateWriter = new EnemySaveStateWriter();
+        IScoreSaveStateReader scoreSaveStateReader = new ScoreSaveStateReader(_scoreModel);
+        IScoreSaveStateWriter scoreSaveStateWriter = new ScoreSaveStateWriter(_scoreModel);
         IPauseStateService pauseStateService = new PauseStateService(_scriptsToDisableOnPause);
 
         SaveCurrentGameInteractor saveCurrentGameInteractor = new SaveCurrentGameInteractor(
             saveGameInteractor,
             appServices.SceneLoader,
             playerSaveStateReader,
-            enemySaveStateReader);
+            enemySaveStateReader,
+            scoreSaveStateReader);
 
         LoadCurrentGameInteractor loadCurrentGameInteractor = new LoadCurrentGameInteractor(
             loadGameInteractor,
             appServices.SceneLoader,
             appServices.PendingLoadDataService,
             playerSaveStateWriter,
-            enemySaveStateWriter);
+            enemySaveStateWriter,
+            scoreSaveStateWriter);
 
         _pauseMenuController = new Ui.PauseMenu.PauseMenuController(
             new PauseMenuModel(),
@@ -98,6 +129,11 @@ public sealed class GameSceneEntryPoint : SceneEntryPointBase
             _playerHealth,
             _deathScreenView,
             appServices.SceneLoader);
+
+        if (_scoreboardView != null)
+            _scoreboardController = new ScoreboardUiController(_scoreModel, _scoreboardView);
+        else
+            Debug.LogWarning("GameSceneEntryPoint has no ScoreboardView assigned. Score will be tracked but not shown.");
 
         InjectBoss();
         InjectPlayerIntoEnemies();
@@ -126,6 +162,7 @@ public sealed class GameSceneEntryPoint : SceneEntryPointBase
         EnemyRoomReference roomReference = bossController.GetComponent<EnemyRoomReference>();
         bossController.SetPeacefulMode(_gameModeService.IsPeacefulMode);
         bossController.Construct(_playerController.transform, roomReference != null ? roomReference.RoomBounds : null);
+        RegisterEnemyForScore(bossController.gameObject);
     }
 
     private BossController FindBossControllerIncludingInactive()
@@ -200,11 +237,13 @@ public sealed class GameSceneEntryPoint : SceneEntryPointBase
                 Debug.LogWarning($"Enemy {enemyAI.name} has no EnemyRoomReference or RoomBounds assigned.");
                 enemyAI.SetPeacefulMode(_gameModeService.IsPeacefulMode);
                 enemyAI.Construct(_playerController.transform, null);
+                RegisterEnemyForScore(enemyAI.gameObject);
                 continue;
             }
 
             enemyAI.SetPeacefulMode(_gameModeService.IsPeacefulMode);
             enemyAI.Construct(_playerController.transform, roomReference.RoomBounds);
+            RegisterEnemyForScore(enemyAI.gameObject);
         }
 
         EnemyRangedAI[] rangedEnemies = Object.FindObjectsOfType<EnemyRangedAI>();
@@ -220,11 +259,13 @@ public sealed class GameSceneEntryPoint : SceneEntryPointBase
                 Debug.LogWarning($"Ranged enemy {enemyAI.name} has no EnemyRoomReference or RoomBounds assigned.");
                 enemyAI.SetPeacefulMode(_gameModeService.IsPeacefulMode);
                 enemyAI.Construct(_playerController.transform, null);
+                RegisterEnemyForScore(enemyAI.gameObject);
                 continue;
             }
 
             enemyAI.SetPeacefulMode(_gameModeService.IsPeacefulMode);
             enemyAI.Construct(_playerController.transform, roomReference.RoomBounds);
+            RegisterEnemyForScore(enemyAI.gameObject);
         }
 
         EnemyCombat[] enemiesCombat = Object.FindObjectsOfType<EnemyCombat>();
@@ -245,7 +286,16 @@ public sealed class GameSceneEntryPoint : SceneEntryPointBase
     {
         EnemySpawner[] spawners = Object.FindObjectsOfType<EnemySpawner>();
         foreach (EnemySpawner spawner in spawners)
-            spawner.Construct(_playerController.transform, _gameModeService.IsPeacefulMode);
+            spawner.Construct(_playerController.transform, _gameModeService.IsPeacefulMode, _enemyDeathEventHub);
+    }
+
+    private void RegisterEnemyForScore(GameObject enemyObject)
+    {
+        if (_enemyDeathEventHub == null || enemyObject == null)
+            return;
+
+        if (enemyObject.TryGetComponent(out EnemyHealth enemyHealth))
+            _enemyDeathEventHub.Register(enemyHealth);
     }
 
     private void OnDestroy()
@@ -253,6 +303,10 @@ public sealed class GameSceneEntryPoint : SceneEntryPointBase
         _pauseMenuController?.Dispose();
         _healthBarController?.Dispose();
         _deathScreenController?.Dispose();
+        _scoreboardController?.Dispose();
+        _playVictoryMusicOnMobKillsInteractor?.Dispose();
+        _enemyKilledScoreHandler?.Dispose();
+        _enemyDeathEventHub?.Dispose();
 
         Time.timeScale = 1f;
     }

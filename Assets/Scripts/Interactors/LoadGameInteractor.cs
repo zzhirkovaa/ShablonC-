@@ -3,15 +3,18 @@ public sealed class LoadGameInteractor
     private readonly ISceneStateRepository _sceneStateRepository;
     private readonly IPlayerRepository _playerRepository;
     private readonly IEnemyRepository _enemyRepository;
+    private readonly IScoreRepository _scoreRepository;
 
     public LoadGameInteractor(
         ISceneStateRepository sceneStateRepository,
         IPlayerRepository playerRepository,
-        IEnemyRepository enemyRepository)
+        IEnemyRepository enemyRepository,
+        IScoreRepository scoreRepository)
     {
         _sceneStateRepository = sceneStateRepository;
         _playerRepository = playerRepository;
         _enemyRepository = enemyRepository;
+        _scoreRepository = scoreRepository;
     }
 
     public GameProgressModel Execute()
@@ -26,6 +29,7 @@ public sealed class LoadGameInteractor
         {
             SceneName = sceneName,
             PlayerData = playerData,
+            Score = _scoreRepository.Load(),
             Enemies = new System.Collections.Generic.List<EnemyDataModel>(_enemyRepository.Load())
         };
     }

@@ -12,19 +12,22 @@ public sealed class LoadCurrentGameInteractor
     private readonly IPendingLoadDataService _pendingLoadDataService;
     private readonly IPlayerSaveStateWriter _playerSaveStateWriter;
     private readonly IEnemySaveStateWriter _enemySaveStateWriter;
+    private readonly IScoreSaveStateWriter _scoreSaveStateWriter;
 
     public LoadCurrentGameInteractor(
         LoadGameInteractor loadGameInteractor,
         ISceneLoader sceneLoader,
         IPendingLoadDataService pendingLoadDataService,
         IPlayerSaveStateWriter playerSaveStateWriter,
-        IEnemySaveStateWriter enemySaveStateWriter)
+        IEnemySaveStateWriter enemySaveStateWriter,
+        IScoreSaveStateWriter scoreSaveStateWriter)
     {
         _loadGameInteractor = loadGameInteractor;
         _sceneLoader = sceneLoader;
         _pendingLoadDataService = pendingLoadDataService;
         _playerSaveStateWriter = playerSaveStateWriter;
         _enemySaveStateWriter = enemySaveStateWriter;
+        _scoreSaveStateWriter = scoreSaveStateWriter;
     }
 
     public void ApplyPendingLoadIfNeeded()
@@ -56,5 +59,6 @@ public sealed class LoadCurrentGameInteractor
     {
         _playerSaveStateWriter.Apply(progress.PlayerData);
         _enemySaveStateWriter.Apply(progress.Enemies);
+        _scoreSaveStateWriter.Apply(progress.Score);
     }
 }

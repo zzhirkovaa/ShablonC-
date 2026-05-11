@@ -4,5 +4,6 @@ public sealed class GameProgressModel
 {
     public string SceneName { get; set; }
     public PlayerDataModel PlayerData { get; set; }
+    public int Score { get; set; }
     public List<EnemyDataModel> Enemies { get; set; } = new();
 }
