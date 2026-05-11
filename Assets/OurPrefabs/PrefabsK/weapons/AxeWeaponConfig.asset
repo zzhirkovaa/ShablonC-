@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4c74b43a41806794e891d4d8bfec929a, type: 3}
+  m_Name: AxeWeaponConfig
+  m_EditorClassIdentifier: Assembly-CSharp::MeleeWeaponConfigSO
+  _weaponName: Weapon
+  _weaponKind: 0
+  _damage: 10
+  _attackRange: 2
+  _attackCooldown: 2
+  _animationTrigger: Attack
+  _weaponVisualPrefab: {fileID: 3975944487916915748, guid: b3ad965ce801c7b40bd6cb6c22fdee22, type: 3}
+  _weaponAnchorName: WeaponAnchor
+  _fallbackBoneName: hand.L
+  _localPosition: {x: 0, y: 0, z: 0}
+  _localRotationEuler: {x: 0, y: 0, z: 0}
+  _localScale: {x: 1, y: 1, z: 1}
