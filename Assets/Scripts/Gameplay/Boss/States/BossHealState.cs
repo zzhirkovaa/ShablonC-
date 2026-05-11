@@ -65,6 +65,6 @@ public sealed class BossHealState : AbstractBossState
 
         Context.MarkHealed();
         Context.ClearEnrageRequest();
-        StateMachine.ChangeState(Boss.IdleState, "Boss finished healing");
+        StateMachine.ChangeState(BossStateType.Idle, "Boss finished healing");
     }
 }

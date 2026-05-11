@@ -6,6 +6,6 @@ public sealed class BossPatrolState : AbstractBossState
 
     public override void Enter()
     {
-        StateMachine.ChangeState(Boss.IdleState, "Patrol is disabled for the giant boss");
+        StateMachine.ChangeState(BossStateType.Idle, "Patrol is disabled for the giant boss");
     }
 }

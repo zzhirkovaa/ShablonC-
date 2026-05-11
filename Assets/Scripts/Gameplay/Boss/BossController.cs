@@ -96,15 +96,6 @@ public sealed class BossController : MonoBehaviour
     public BossStateMachine StateMachine { get; private set; }
     public BossContext Context { get; private set; }
 
-    public BossIdleState IdleState { get; private set; }
-    public BossAggroState AggroState { get; private set; }
-    public BossChaseState ChaseState { get; private set; }
-    public BossAttackState AttackState { get; private set; }
-    public BossHeavyAttackState HeavyAttackState { get; private set; }
-    public BossEnrageState EnrageState { get; private set; }
-    public BossHealState HealState { get; private set; }
-    public BossDeathState DeathState { get; private set; }
-
     public float DetectionRadius => _detectionRadius;
     public float LoseTargetRadius => Mathf.Max(_loseTargetRadius, _detectionRadius);
     public float AttackRange => _attackRange;
@@ -146,18 +137,9 @@ public sealed class BossController : MonoBehaviour
         Context.SetPeacefulMode(_isPeacefulMode);
         StateMachine = new BossStateMachine(Context, gameObject.name);
 
-        IdleState = new BossIdleState(Context, StateMachine);
-        AggroState = new BossAggroState(Context, StateMachine);
-        ChaseState = new BossChaseState(Context, StateMachine);
-        AttackState = new BossAttackState(Context, StateMachine);
-        HeavyAttackState = new BossHeavyAttackState(Context, StateMachine);
-        EnrageState = new BossEnrageState(Context, StateMachine);
-        HealState = new BossHealState(Context, StateMachine);
-        DeathState = new BossDeathState(Context, StateMachine);
-
         SubscribeToHealth();
         DisableDamageHitboxes();
-        StateMachine.ChangeState(IdleState, "Initial boss state");
+        StateMachine.ChangeState(BossStateType.Idle, "Initial boss state");
     }
 
     private void Start()
@@ -206,7 +188,7 @@ public sealed class BossController : MonoBehaviour
             return;
 
         Context.MarkProvokedByPlayer();
-        StateMachine.ChangeState(AggroState, "Boss was hit by player");
+        StateMachine.ChangeState(BossStateType.Aggro, "Boss was hit by player");
     }
 
     public void ActivateBoss()
@@ -217,8 +199,8 @@ public sealed class BossController : MonoBehaviour
         Context?.SetTarget(_target);
         RandomizeLoadout();
 
-        if (StateMachine != null && IdleState != null)
-            StateMachine.ChangeState(IdleState, "Boss activated after enemy kills");
+        if (StateMachine != null)
+            StateMachine.ChangeState(BossStateType.Idle, "Boss activated after enemy kills");
     }
 
     public void MoveToTarget()
@@ -318,36 +300,41 @@ public sealed class BossController : MonoBehaviour
         return true;
     }
 
-    public IBossState SelectReadyAttackState()
+    public bool TrySelectReadyAttackState(out BossStateType stateType)
     {
         AvoidRepeatingLastElementIfPossible();
 
-        IBossState preferredState = GetReadyAttackState(_currentAttackType);
-        if (preferredState != null)
-            return preferredState;
+        if (TryGetReadyAttackState(_currentAttackType, out stateType))
+            return true;
 
         BossAttackType fallbackAttackType = GetOppositeAttackType(_currentAttackType);
-        return GetReadyAttackState(fallbackAttackType);
+        return TryGetReadyAttackState(fallbackAttackType, out stateType);
     }
 
-    private IBossState GetReadyAttackState(BossAttackType attackType)
+    private bool TryGetReadyAttackState(BossAttackType attackType, out BossStateType stateType)
     {
+        stateType = attackType == BossAttackType.HeavyHands
+            ? BossStateType.HeavyAttack
+            : BossStateType.Attack;
+
         if (WouldRepeatLastAttackType(attackType))
-            return null;
+            return false;
 
         if (attackType == BossAttackType.HeavyHands)
-            return Context.CanUseHeavyAttack ? HeavyAttackState : null;
+            return Context.CanUseHeavyAttack;
 
-        return Context.CanUseAttack ? AttackState : null;
+        return Context.CanUseAttack;
     }
 
-    public IBossState SelectReadyRangedFireAttackState(bool forceIfFireIsActive)
+    public bool TrySelectReadyRangedFireAttackState(bool forceIfFireIsActive, out BossStateType stateType)
     {
+        stateType = BossStateType.Attack;
+
         if (!CanStartRangedFireAttack(forceIfFireIsActive))
-            return null;
+            return false;
 
         _currentElementType = BossElementType.Fire;
-        return SelectReadyAttackState();
+        return TrySelectReadyAttackState(out stateType);
     }
 
     public void OpenAttackDamageWindow()
@@ -410,11 +397,11 @@ public sealed class BossController : MonoBehaviour
         _elementVisuals?.ClearAirEffect();
     }
 
-    public void PrepareAnimatorForPostAttack(IBossState nextState)
+    public void PrepareAnimatorForPostAttack(BossStateType nextStateType)
     {
         ClearActiveElementEffects();
         ResetAttackAnimatorTriggers();
-        SetAnimatorBool(_isMovingParameter, ReferenceEquals(nextState, ChaseState));
+        SetAnimatorBool(_isMovingParameter, nextStateType == BossStateType.Chase);
     }
 
     public void OnFireCastMoment()
@@ -540,8 +527,8 @@ public sealed class BossController : MonoBehaviour
         if (StateMachine == null)
             return false;
 
-        return ReferenceEquals(StateMachine.CurrentState, AttackState)
-            || ReferenceEquals(StateMachine.CurrentState, HeavyAttackState);
+        return StateMachine.IsCurrentState<BossAttackState>()
+            || StateMachine.IsCurrentState<BossHeavyAttackState>();
     }
 
     private void ResetLoadoutTimer()
@@ -851,15 +838,15 @@ public sealed class BossController : MonoBehaviour
             : null;
     }
 
-    public IBossState SelectMovementOrIdleState()
+    public BossStateType SelectMovementOrIdleState()
     {
         if (!Context.HasTarget || Context.HasLostTarget)
-            return IdleState;
+            return BossStateType.Idle;
 
         if (Context.IsTargetInAttackRange)
-            return AggroState;
+            return BossStateType.Aggro;
 
-        return ChaseState;
+        return BossStateType.Chase;
     }
 
     private void CacheComponents()
@@ -953,7 +940,7 @@ public sealed class BossController : MonoBehaviour
     {
         DisableDamageHitboxes();
         StopMovement();
-        StateMachine.ChangeState(DeathState, "Boss health depleted");
+        StateMachine.ChangeState(BossStateType.Death, "Boss health depleted");
     }
 
     private bool IsDamageFromPlayer(DamageInfo damage)

@@ -1,39 +1,48 @@
+using System;
 using UnityEngine;
 
 public sealed class BossStateMachine
 {
+    private readonly BossStateFactory _factory;
     private readonly string _ownerName;
+    private IBossState _currentState;
 
     public BossStateMachine(BossContext context, string ownerName)
     {
         Context = context;
         _ownerName = ownerName;
+        _factory = new BossStateFactory(context, this);
     }
 
     public BossContext Context { get; }
-    public IBossState CurrentState { get; private set; }
 
-    public void ChangeState(IBossState nextState, string reason = "No reason provided")
+    public void ChangeState(BossStateType nextStateType, string reason = "No reason provided")
     {
-        if (nextState == null || ReferenceEquals(CurrentState, nextState))
-            return;
+        IBossState previousState = _currentState;
+        string previousStateName = previousState?.GetType().Name ?? "None";
 
-        string previousStateName = CurrentState?.GetType().Name ?? "None";
-        string nextStateName = nextState.GetType().Name;
-        Debug.Log($"[{_ownerName}] Boss state change: {previousStateName} -> {nextStateName}. Reason: {reason}");
+        previousState?.Exit();
+        if (previousState is IDisposable disposableState)
+            disposableState.Dispose();
 
-        CurrentState?.Exit();
-        CurrentState = nextState;
-        CurrentState.Enter();
+        _currentState = _factory.Create(nextStateType);
+
+        Debug.Log($"[{_ownerName}] Boss state change: {previousStateName} -> {_currentState.GetType().Name}. Reason: {reason}");
+        _currentState.Enter();
     }
 
     public void Tick()
     {
-        CurrentState?.Tick();
+        _currentState?.Tick();
     }
 
     public void FixedTick()
     {
-        CurrentState?.FixedTick();
+        _currentState?.FixedTick();
+    }
+
+    public bool IsCurrentState<TState>() where TState : class, IBossState
+    {
+        return _currentState is TState;
     }
 }

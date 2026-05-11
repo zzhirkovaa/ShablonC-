@@ -18,7 +18,7 @@ public class BossAggroState : AbstractBossState
 
         if (Boss.IsPeacefulMode && !Context.WasProvokedByPlayer)
         {
-            StateMachine.ChangeState(Boss.IdleState, "Peaceful mode suppresses unprovoked boss aggression");
+            StateMachine.ChangeState(BossStateType.Idle, "Peaceful mode suppresses unprovoked boss aggression");
             return;
         }
 
@@ -27,7 +27,7 @@ public class BossAggroState : AbstractBossState
             if (TryEnterHeal())
                 return;
 
-            StateMachine.ChangeState(Boss.IdleState, "Boss lost the player");
+            StateMachine.ChangeState(BossStateType.Idle, "Boss lost the player");
             return;
         }
 
@@ -39,25 +39,23 @@ public class BossAggroState : AbstractBossState
             Boss.StopMovement();
             FaceTarget(Time.deltaTime);
 
-            IBossState attackState = Boss.SelectReadyAttackState();
-            if (attackState != null)
+            if (Boss.TrySelectReadyAttackState(out BossStateType attackStateType))
             {
-                StateMachine.ChangeState(attackState, "Boss selected an attack from aggro");
+                StateMachine.ChangeState(attackStateType, "Boss selected an attack from aggro");
             }
 
             return;
         }
 
-        IBossState rangedFireState = Boss.SelectReadyRangedFireAttackState(true);
-        if (rangedFireState != null)
+        if (Boss.TrySelectReadyRangedFireAttackState(true, out BossStateType rangedFireStateType))
         {
             Boss.StopMovement();
             FaceTarget(Time.deltaTime);
-            StateMachine.ChangeState(rangedFireState, "Boss casts fire before chasing distant player");
+            StateMachine.ChangeState(rangedFireStateType, "Boss casts fire before chasing distant player");
             return;
         }
 
-        StateMachine.ChangeState(Boss.ChaseState, "Player is outside attack range");
+        StateMachine.ChangeState(BossStateType.Chase, "Player is outside attack range");
     }
 
     public override void FixedTick()

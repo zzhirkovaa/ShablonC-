@@ -18,7 +18,7 @@ public class BossHeavyAttackState : AbstractBossState
 
         if (!Boss.TryStartHeavyAttack())
         {
-            StateMachine.ChangeState(Boss.AggroState, "Heavy attack was on cooldown");
+            StateMachine.ChangeState(BossStateType.Aggro, "Heavy attack was on cooldown");
             return;
         }
 
@@ -47,9 +47,9 @@ public class BossHeavyAttackState : AbstractBossState
 
         if (Boss.ConsumeAttackAnimationFinished() || _elapsed >= _duration)
         {
-            IBossState nextState = Boss.SelectMovementOrIdleState();
-            Boss.PrepareAnimatorForPostAttack(nextState);
-            StateMachine.ChangeState(nextState, "Boss finished heavy attack");
+            BossStateType nextStateType = Boss.SelectMovementOrIdleState();
+            Boss.PrepareAnimatorForPostAttack(nextStateType);
+            StateMachine.ChangeState(nextStateType, "Boss finished heavy attack");
         }
     }
 

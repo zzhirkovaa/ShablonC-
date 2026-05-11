@@ -22,6 +22,6 @@ public sealed class BossIdleState : AbstractBossState
             return;
 
         if (Context.HasDetectedTarget)
-            StateMachine.ChangeState(Boss.AggroState, "Player entered boss detection radius");
+            StateMachine.ChangeState(BossStateType.Aggro, "Player entered boss detection radius");
     }
 }

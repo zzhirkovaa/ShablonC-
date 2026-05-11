@@ -33,7 +33,7 @@ public abstract class AbstractBossState : IBossState
         if (!Context.IsDead)
             return false;
 
-        StateMachine.ChangeState(Boss.DeathState, "Boss health depleted");
+        StateMachine.ChangeState(BossStateType.Death, "Boss health depleted");
         return true;
     }
 
@@ -42,7 +42,7 @@ public abstract class AbstractBossState : IBossState
         if (!Context.ShouldEnterEnrage)
             return false;
 
-        StateMachine.ChangeState(Boss.EnrageState, "Boss HP dropped below enrage threshold");
+        StateMachine.ChangeState(BossStateType.Enrage, "Boss HP dropped below enrage threshold");
         return true;
     }
 
@@ -51,7 +51,7 @@ public abstract class AbstractBossState : IBossState
         if (!Context.CanEnterHeal)
             return false;
 
-        StateMachine.ChangeState(Boss.HealState, "Boss HP dropped below heal threshold");
+        StateMachine.ChangeState(BossStateType.Heal, "Boss HP dropped below heal threshold");
         return true;
     }
 

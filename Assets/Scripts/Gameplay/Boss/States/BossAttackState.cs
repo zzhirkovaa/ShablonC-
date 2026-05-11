@@ -18,7 +18,7 @@ public sealed class BossAttackState : AbstractBossState
 
         if (!Boss.TryStartAttack())
         {
-            StateMachine.ChangeState(Boss.AggroState, "Normal attack was on cooldown");
+            StateMachine.ChangeState(BossStateType.Aggro, "Normal attack was on cooldown");
             return;
         }
 
@@ -47,9 +47,9 @@ public sealed class BossAttackState : AbstractBossState
 
         if (Boss.ConsumeAttackAnimationFinished() || _elapsed >= _duration)
         {
-            IBossState nextState = Boss.SelectMovementOrIdleState();
-            Boss.PrepareAnimatorForPostAttack(nextState);
-            StateMachine.ChangeState(nextState, "Boss finished normal attack");
+            BossStateType nextStateType = Boss.SelectMovementOrIdleState();
+            Boss.PrepareAnimatorForPostAttack(nextStateType);
+            StateMachine.ChangeState(nextStateType, "Boss finished normal attack");
         }
     }
 

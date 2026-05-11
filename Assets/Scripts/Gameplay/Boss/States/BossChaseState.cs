@@ -29,7 +29,7 @@ public sealed class BossChaseState : AbstractBossState
 
         if (Boss.IsPeacefulMode && !Context.WasProvokedByPlayer)
         {
-            StateMachine.ChangeState(Boss.IdleState, "Peaceful mode suppresses unprovoked chase");
+            StateMachine.ChangeState(BossStateType.Idle, "Peaceful mode suppresses unprovoked chase");
             return;
         }
 
@@ -38,7 +38,7 @@ public sealed class BossChaseState : AbstractBossState
             if (TryEnterHeal())
                 return;
 
-            StateMachine.ChangeState(Boss.IdleState, "Boss lost the player during chase");
+            StateMachine.ChangeState(BossStateType.Idle, "Boss lost the player during chase");
             return;
         }
 
@@ -49,21 +49,19 @@ public sealed class BossChaseState : AbstractBossState
         {
             Boss.StopMovement();
 
-            IBossState attackState = Boss.SelectReadyAttackState();
-            if (attackState != null)
+            if (Boss.TrySelectReadyAttackState(out BossStateType attackStateType))
             {
-                StateMachine.ChangeState(attackState, "Boss selected an attack after chase");
+                StateMachine.ChangeState(attackStateType, "Boss selected an attack after chase");
             }
 
             return;
         }
 
-        IBossState rangedFireState = Boss.SelectReadyRangedFireAttackState(false);
-        if (rangedFireState != null)
+        if (Boss.TrySelectReadyRangedFireAttackState(false, out BossStateType rangedFireStateType))
         {
             Boss.StopMovement();
             FaceTarget(Time.deltaTime);
-            StateMachine.ChangeState(rangedFireState, "Boss casts fire at distant player during chase");
+            StateMachine.ChangeState(rangedFireStateType, "Boss casts fire at distant player during chase");
             return;
         }
 
